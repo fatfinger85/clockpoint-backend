@@ -4,8 +4,9 @@
 <head>
   <meta charset="UTF-8">
   <title>ClockPoint - Panel Admin</title>
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <!-- Estilos personalizados (idealmente extraer a styles.css) -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet">
   <style>
     body { background-color: #f8f9fa; }
     .nav-tabs .nav-link.active { background-color: #0d6efd; color: #fff; }
@@ -22,46 +23,67 @@
 
       <ul class="nav nav-tabs" id="adminTabs" role="tablist">
         <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab" aria-label="Pestaña Historial">🕓 Historial</button>
+          <button class="nav-link active" id="historial-tab"
+                  data-bs-toggle="tab" data-bs-target="#historial"
+                  type="button">🕓 Historial</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab" aria-label="Pestaña Agregar Empleado">➕ Agregar Empleado</button>
+          <button class="nav-link" id="empleados-tab"
+                  data-bs-toggle="tab" data-bs-target="#empleados"
+                  type="button">➕ Agregar Empleado</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab" aria-label="Pestaña Gestionar Empleados">👥 Gestionar Empleados</button>
+          <button class="nav-link" id="gestion-tab"
+                  data-bs-toggle="tab" data-bs-target="#gestion"
+                  type="button">👥 Gestionar Empleados</button>
         </li>
         <li class="nav-item" role="presentation">
-          <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab" aria-label="Pestaña Proyectos">🏗️ Proyectos</button>
+          <button class="nav-link" id="proyectos-tab"
+                  data-bs-toggle="tab" data-bs-target="#proyectos"
+                  type="button">🏗️ Proyectos</button>
         </li>
         <li class="nav-item">
-          <a class="nav-link text-success" href="/exportar" target="_blank" aria-label="Exportar CSV">📤 Exportar CSV</a>
+          <a class="nav-link text-success" href="/exportar"
+             target="_blank">📤 Exportar CSV</a>
         </li>
       </ul>
 
-      <div class="tab-content mt-4" id="adminTabsContent">
-        <div class="tab-pane fade show active" id="historial" role="tabpanel">
+      <div class="tab-content mt-4">
+        <!-- Historial -->
+        <div class="tab-pane fade show active" id="historial">
           <div id="tablaHistorial">Cargando historial...</div>
         </div>
-        <div class="tab-pane fade" id="empleados" role="tabpanel">
-          <form action="/agregar-empleado" method="POST" class="mt-3 row g-2" id="formAgregarEmpleado">
+
+        <!-- Agregar Empleado -->
+        <div class="tab-pane fade" id="empleados">
+          <form id="formAgregarEmpleado" class="mt-3 row g-2">
             <div class="col-md-5">
-              <input type="text" name="nombre" placeholder="Nombre" required class="form-control">
+              <input type="text" name="nombre" placeholder="Nombre"
+                     required class="form-control">
             </div>
             <div class="col-md-5">
-              <input type="text" name="pin" placeholder="PIN" required class="form-control">
+              <input type="text" name="pin" placeholder="PIN"
+                     required class="form-control">
             </div>
             <div class="col-md-2">
-              <button type="submit" class="btn btn-primary w-100">Agregar</button>
+              <button type="submit"
+                      class="btn btn-primary w-100">Agregar</button>
             </div>
           </form>
         </div>
-        <div class="tab-pane fade" id="gestion" role="tabpanel">
+
+        <!-- Gestionar Empleados -->
+        <div class="tab-pane fade" id="gestion">
           <div id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
         </div>
-        <div class="tab-pane fade" id="proyectos" role="tabpanel">
+
+        <!-- Proyectos -->
+        <div class="tab-pane fade" id="proyectos">
           <form id="formProyecto" class="mt-3 row g-2">
             <div class="col-md-10">
-              <input type="text" id="nombreProyecto" placeholder="Nombre del Proyecto" required class="form-control">
+              <input type="text" id="nombreProyecto"
+                     placeholder="Nombre del Proyecto" required
+                     class="form-control">
             </div>
             <div class="col-md-2">
               <button type="submit" class="btn btn-success w-100">Agregar</button>
@@ -73,136 +95,178 @@
     </div>
   </div>
 
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <script
+    src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js">
+  </script>
   <script>
-    // Muestra un spinner en el contenedor dado
-    function showSpinner(containerId) {
-      document.getElementById(containerId).innerHTML = `
+  document.addEventListener('DOMContentLoaded', () => {
+    // Spinner helper
+    const showSpinner = id => {
+      document.getElementById(id).innerHTML = `
         <div class="text-center py-3">
-          <div class="spinner-border" role="status"><span class="visually-hidden">Cargando...</span></div>
+          <div class="spinner-border" role="status">
+            <span class="visually-hidden">Cargando...</span>
+          </div>
         </div>`;
-    }
+    };
 
-    // Carga el historial de registros, incluyendo nombre del proyecto
-    async function cargarHistorial() {
+    // 1) Historial
+    const cargarHistorial = async () => {
       showSpinner('tablaHistorial');
       try {
-        // Obtener registros y proyectos
-        const [resReg, resProj] = await Promise.all([
-          fetch('/registros'),
-          fetch('/proyectos')
+        const [rRes, pRes] = await Promise.all([
+          fetch('/registros'), fetch('/proyectos')
         ]);
-        if (!resReg.ok) throw new Error('Error al obtener registros');
-        if (!resProj.ok) throw new Error('Error al obtener proyectos');
-
-        const registros = await resReg.json();
-        const proyectos = await resProj.json();
-
-        // Mapa de proyectos por id
-        const mapaProyectos = {};
-        proyectos.forEach(p => { mapaProyectos[p.id] = p.nombre; });
-
-        // Construir tabla con columna Proyecto
+        if (!rRes.ok || !pRes.ok) throw new Error('Fetch fallido');
+        const registros = await rRes.json();
+        const proyectos = await pRes.json();
+        const mapa = {};
+        proyectos.forEach(p => mapa[p.id] = p.nombre);
         let html = `
           <table class="table table-bordered table-striped">
             <thead>
-              <tr>
-                <th>Nombre</th>
-                <th>Acción</th>
-                <th>Proyecto</th>
-                <th>Fecha</th>
-              </tr>
-            </thead>
-            <tbody>
-        `;
+              <tr><th>Nombre</th><th>Acción</th><th>Proyecto</th><th>Fecha</th></tr>
+            </thead><tbody>`;
         registros.forEach(r => {
-          const nombreProyecto = mapaProyectos[r.proyecto_id] || '—';
-          html += `
-            <tr>
-              <td>${r.nombre}</td>
-              <td>${r.accion}</td>
-              <td>${nombreProyecto}</td>
-              <td>${r.timestamp}</td>
-            </tr>
-          `;
+          html += `<tr>
+            <td>${r.nombre}</td>
+            <td>${r.accion}</td>
+            <td>${mapa[r.proyecto_id]||'—'}</td>
+            <td>${r.timestamp}</td>
+          </tr>`;
         });
         html += `</tbody></table>`;
-
         document.getElementById('tablaHistorial').innerHTML = html;
-      } catch (err) {
+      } catch (e) {
         document.getElementById('tablaHistorial').innerHTML =
-          `<div class="alert alert-danger">Error cargando historial: ${err.message}</div>`;
+          `<div class="alert alert-danger">Error: ${e.message}</div>`;
       }
-    }
+    };
 
-    // Resto de funciones idénticas
-    async function cargarEmpleados() {
+    // 2) Empleados
+    const cargarEmpleados = async () => {
       showSpinner('tablaEmpleados');
       try {
         const res = await fetch('/empleados');
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
-        let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead><tbody>";
+        let html = `
+          <table class="table table-bordered table-hover">
+            <thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead>
+            <tbody>`;
         data.forEach(e => {
-          html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td></tr>`;
+          html += `<tr>
+            <td>${e.nombre}</td>
+            <td>${e.pin}</td>
+            <td>
+              <button class="btn btn-sm btn-danger"
+                onclick="eliminarEmpleado('${e.nombre}')">
+                Eliminar
+              </button>
+            </td>
+          </tr>`;
         });
-        html += "</tbody></table>";
+        html += `</tbody></table>`;
         document.getElementById('tablaEmpleados').innerHTML = html;
-      } catch (err) {
-        document.getElementById('tablaEmpleados').innerHTML = `<div class='alert alert-danger'>Error cargando empleados: ${err.message}</div>`;
+      } catch (e) {
+        document.getElementById('tablaEmpleados').innerHTML =
+          `<div class="alert alert-danger">Error: ${e.message}</div>`;
       }
-    }
+    };
 
-    async function eliminarEmpleado(nombre) {
+    window.eliminarEmpleado = async nombre => {
       if (!confirm(`¿Eliminar a ${nombre}?`)) return;
       try {
         const res = await fetch('/eliminar-empleado', {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          headers: {'Content-Type':'application/json'},
           body: JSON.stringify({ nombre })
         });
         if (!res.ok) throw new Error(res.statusText);
-      } catch (err) {
-        alert(`Error eliminando empleado: ${err.message}`);
+      } catch (e) {
+        alert('Error al eliminar: ' + e.message);
       }
       cargarEmpleados();
-    }
+    };
 
-    async function cargarProyectos() {
+    // 3) Proyectos
+    const cargarProyectos = async () => {
       showSpinner('tablaProyectos');
       try {
         const res = await fetch('/proyectos');
         if (!res.ok) throw new Error(res.statusText);
         const data = await res.json();
-        let html = "<table class='table table-bordered'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
-        data.forEach(p => { html += `<tr><td>${p.nombre}</td></tr>`; });
-        html += "</tbody></table>";
+        let html = `
+          <table class="table table-bordered">
+            <thead><tr><th>Nombre del Proyecto</th></tr></thead>
+            <tbody>`;
+        data.forEach(p => {
+          html += `<tr><td>${p.nombre}</td></tr>`;
+        });
+        html += `</tbody></table>`;
         document.getElementById('tablaProyectos').innerHTML = html;
-      } catch (err) {
-        document.getElementById('tablaProyectos').innerHTML = `<div class='alert alert-danger'>Error cargando proyectos: ${err.message}</div>`;
+      } catch (e) {
+        document.getElementById('tablaProyectos').innerHTML =
+          `<div class="alert alert-danger">Error: ${e.message}</div>`;
       }
-    }
+    };
 
-    document.getElementById('formProyecto').addEventListener('submit', async (e) => {
-      e.preventDefault();
-      const nombre = document.getElementById('nombreProyecto').value.trim();
-      if (!nombre) return;
-      try {
-        const res = await fetch('/agregar-proyecto', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ nombre }) });
-        if (!res.ok) throw new Error(res.statusText);
-        e.target.reset();
-        cargarProyectos();
-      } catch (err) {
-        alert(`Error al agregar proyecto: ${err.message}`);
-      }
-    });
+    // AJAX Agregar Empleado
+    document.getElementById('formAgregarEmpleado')
+      .addEventListener('submit', async e => {
+        e.preventDefault();
+        const form = e.target;
+        const nombre = form.nombre.value.trim();
+        const pin    = form.pin.value.trim();
+        if (!nombre || !pin) return alert('Nombre y PIN requeridos');
+        try {
+          const res = await fetch('/agregar-empleado', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({nombre,pin})
+          });
+          if (!res.ok) throw new Error(await res.text());
+          form.reset();
+          new bootstrap.Tab(document.querySelector('#gestion-tab')).show();
+          cargarEmpleados();
+        } catch (err) {
+          alert('Error al agregar empleado: ' + err.message);
+        }
+      });
 
-    document.querySelector('#historial-tab').addEventListener('shown.bs.tab', cargarHistorial);
-    document.querySelector('#empleados-tab').addEventListener('shown.bs.tab', cargarEmpleados);
-    document.querySelector('#gestion-tab').addEventListener('shown.bs.tab', cargarEmpleados);
-    document.querySelector('#proyectos-tab').addEventListener('shown.bs.tab', cargarProyectos);
+    // AJAX Agregar Proyecto
+    document.getElementById('formProyecto')
+      .addEventListener('submit', async e => {
+        e.preventDefault();
+        const nombre = document.getElementById('nombreProyecto').value.trim();
+        if (!nombre) return alert('Nombre requerido');
+        try {
+          const res = await fetch('/agregar-proyecto', {
+            method: 'POST',
+            headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({nombre})
+          });
+          if (!res.ok) throw new Error(await res.text());
+          e.target.reset();
+          cargarProyectos();
+        } catch (err) {
+          alert('Error al agregar proyecto: ' + err.message);
+        }
+      });
 
+    // Al cambiar de pestaña recarga
+    document.querySelector('#historial-tab')
+      .addEventListener('shown.bs.tab', cargarHistorial);
+    document.querySelector('#gestion-tab')
+      .addEventListener('shown.bs.tab', cargarEmpleados);
+    document.querySelector('#proyectos-tab')
+      .addEventListener('shown.bs.tab', cargarProyectos);
+
+    // Carga inicial
     cargarHistorial();
+    cargarEmpleados();
+    cargarProyectos();
+  });
   </script>
 </body>
 </html>
