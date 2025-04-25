@@ -84,16 +84,38 @@ def submit():
 @app.route("/agregar-empleado", methods=["POST"])
 def agregar_empleado():
     if not session.get("admin"):
+        # Para AJAX devolvemos JSON, para form redirigimos
+        if request.is_json:
+            return jsonify({"status":"error","message":"No autorizado"}), 403
         return redirect("/login")
-    nombre = request.form.get("nombre")
-    pin = request.form.get("pin")
+
+    # Detectamos si viene JSON (AJAX) o form clásico
+    if request.is_json:
+        data = request.get_json()
+        nombre = data.get("nombre")
+        pin    = data.get("pin")
+    else:
+        nombre = request.form.get("nombre")
+        pin    = request.form.get("pin")
+
     if not nombre or not pin:
+        if request.is_json:
+            return jsonify({"status":"error","message":"Nombre o PIN vacío"}), 400
         return "Nombre o PIN vacío", 400
+
     try:
-        supabase_srv.table("empleados").insert({"nombre": nombre, "pin": pin}).execute()
+        supabase_srv.table("empleados") \
+            .insert({"nombre": nombre, "pin": pin}) \
+            .execute()
     except Exception:
         logging.error("Error agregando empleado", exc_info=True)
+        if request.is_json:
+            return jsonify({"status":"error","message":"Error interno"}), 500
         return "Error inesperado al agregar empleado", 500
+
+    # Si fue AJAX devolvemos JSON, si no, redirect tradicional
+    if request.is_json:
+        return jsonify({"status":"success"}), 200
     return redirect("/admin")
 
 @app.route("/empleados")
