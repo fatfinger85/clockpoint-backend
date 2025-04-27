@@ -1,3 +1,4 @@
+
 from flask import Flask, request, jsonify, redirect, render_template, session
 from flask_cors import CORS
 from supabase import create_client, Client
@@ -112,38 +113,13 @@ def exportar():
         "Content-Disposition": "attachment;filename=registros.csv"
     }
 
-@app.route("/editar-registro", methods=["POST"])
-def editar_registro():
+@app.route("/eliminar-registro", methods=["POST"])
+def eliminar_registro():
     if not session.get("admin"):
         return jsonify({"status": "error"}), 403
     registro_id = request.json.get("id")
-    nombre = request.json.get("nombre")
-    accion = request.json.get("accion")
-    timestamp = request.json.get("timestamp")
-
     try:
-        supabase.table("registros").update({
-            "nombre": nombre,
-            "accion": accion,
-            "timestamp": timestamp
-        }).eq("id", registro_id).execute()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route("/editar-empleado", methods=["POST"])
-def editar_empleado():
-    if not session.get("admin"):
-        return jsonify({"status": "error"}), 403
-    empleado_id = request.json.get("id")
-    nombre = request.json.get("nombre")
-    pin = request.json.get("pin")
-
-    try:
-        supabase.table("empleados").update({
-            "nombre": nombre,
-            "pin": pin
-        }).eq("id", empleado_id).execute()
+        supabase.table("registros").delete().eq("id", registro_id).execute()
         return jsonify({"status": "success"})
     except Exception as e:
         return jsonify({"status": "error", "message": str(e)}), 500
