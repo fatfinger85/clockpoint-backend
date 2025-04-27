@@ -1,3 +1,4 @@
+
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -333,10 +334,13 @@
       // Attach event listeners to the "Editar" buttons after they are added to the DOM
       const editButtons = document.querySelectorAll("#tablaHistorial .btn-primary");
       editButtons.forEach(button => {
-        button.addEventListener("click", () => {
-          const id = parseInt(button.dataset.id); //changed from button.dataset.id to parseInt(button.dataset.id)
-          openRegistroModal(id);
-        });
+        if(!button.listenterAttached) { // added if condition
+            button.addEventListener("click", () => {
+            const id = parseInt(button.dataset.id);
+            openRegistroModal(id);
+          });
+          button.listenterAttached = true; // added this line
+        }
       });
     }
 
@@ -353,10 +357,13 @@
       // Attach event listeners to the "Editar" buttons after they are added to the DOM
       const editButtons = document.querySelectorAll("#tablaEmpleados .btn-primary");
       editButtons.forEach(button => {
-        button.addEventListener("click", () => {
-          const id = parseInt(button.dataset.id);  //changed from button.dataset.id to parseInt(button.dataset.id)
-          openEmpleadoModal(id);
-        });
+        if(!button.listenterAttached) { // added if condition
+            button.addEventListener("click", () => {
+            const id = parseInt(button.dataset.id);
+            openEmpleadoModal(id);
+          });
+          button.listenterAttached = true; // added this line
+        }
       });
     }
 
