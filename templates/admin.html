@@ -41,101 +41,6 @@
         overflow-x: auto;  /* Enable horizontal scrolling for tables on small screens */
       }
     }
-    /* Modal Styles */
-    .modal {
-      display: none;
-      position: fixed;
-      z-index: 1000;
-      left: 0;
-      top: 0;
-      width: 100%;
-      height: 100%;
-      overflow: auto;
-      background-color: rgba(0,0,0,0.5);
-    }
-    .modal-content {
-      background-color: #fefefe;
-      margin: 10% auto;
-      padding: 20px;
-      border: 1px solid #888;
-      width: 90%;
-      max-width: 600px;
-      border-radius: 8px;
-      position: relative;
-      box-shadow: 0 4px 8px rgba(0,0,0,0.2);
-      animation: fadeIn 0.3s;
-    }
-    @keyframes fadeIn {
-      from {opacity: 0;}
-      to {opacity: 1;}
-    }
-    .modal-header {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 15px;
-      border-bottom: 1px solid #ddd;
-      padding-bottom: 10px;
-    }
-    .modal-header h2 {
-      margin: 0;
-      font-size: 1.5rem;
-    }
-    .close-button {
-      position: absolute;
-      top: 10px;
-      right: 10px;
-      color: #aaa;
-      font-size: 28px;
-      font-weight: bold;
-      cursor: pointer;
-    }
-    .close-button:hover,
-    .close-button:focus {
-      color: #000;
-      text-decoration: none;
-    }
-    .modal-body {
-      padding-bottom: 15px;
-    }
-    .modal-body form {
-      display: flex;
-      flex-direction: column;
-    }
-    .modal-body form div {
-      margin-bottom: 10px;
-    }
-    .modal-body form label {
-      font-weight: bold;
-      display: block;
-      margin-bottom: 5px;
-    }
-    .modal-body form input {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      width: 100%;
-      box-sizing: border-box;
-    }
-    .modal-body form button {
-      padding: 10px 20px;
-      background-color: #0d6efd;
-      color: white;
-      border: none;
-      border-radius: 4px;
-      cursor: pointer;
-      font-size: 1rem;
-      transition: background-color 0.3s ease;
-      margin-top: 10px;
-    }
-    .modal-body form button:hover {
-      background-color: #0b5ed7;
-    }
-    .modal-footer {
-      text-align: right;
-      border-top: 1px solid #ddd;
-      padding-top: 10px;
-    }
   </style>
 </head>
 <body>
@@ -183,61 +88,26 @@
   </div>
 
   <script>
-    const registroModal = document.getElementById("registroModal");
-    const empleadoModal = document.getElementById("empleadoModal");
-    const closeRegistroModal = document.querySelector("#registroModal .close-button");
-    const closeEmpleadoModal = document.querySelector("#empleadoModal .close-button");
-    const editarRegistroForm = document.getElementById("editarRegistroForm");
-    const editarEmpleadoForm = document.getElementById("editarEmpleadoForm");
-
-    let registrosData = [];
-    let empleadosData = [];
-
-
-
-    closeRegistroModal.onclick = function() {
-      registroModal.style.display = "none";
-    }
-
-    closeEmpleadoModal.onclick = function() {
-      empleadoModal.style.display = "none";
-    }
-
-    window.onclick = function(event) {
-      if (event.target == registroModal) {
-        registroModal.style.display = "none";
-      }
-      if (event.target == empleadoModal) {
-        empleadoModal.style.display = "none";
-      }
-    }
-
-
-
     async function cargarHistorial() {
       const res = await fetch('/registros');
-      registrosData = await res.json();
-      let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th><th>Eliminar</th></tr></thead><tbody>";
-      registrosData.forEach(r => {
-        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarRegistro('${r.id}')">Eliminar</button></td></tr>`;
+      const data = await res.json();
+      let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th></tr></thead><tbody>";
+      data.forEach(r => {
+        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaHistorial").innerHTML = html;
-
-
     }
 
     async function cargarEmpleados() {
       const res = await fetch('/empleados');
-      empleadosData = await res.json();
+      const data = await res.json();
       let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead><tbody>";
-      empleadosData.forEach(e => {
+      data.forEach(e => {
         html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaEmpleados").innerHTML = html;
-
-
     }
 
     async function eliminarEmpleado(nombre) {
@@ -248,16 +118,6 @@
         body: JSON.stringify({ nombre })
       });
       cargarEmpleados();
-    }
-
-    async function eliminarRegistro(id) {
-      if (!confirm(`¿Eliminar este registro?`)) return;
-      await fetch('/eliminar-registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id })
-      });
-      cargarHistorial();
     }
 
     cargarHistorial();
