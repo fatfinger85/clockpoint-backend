@@ -113,17 +113,6 @@ def exportar():
         "Content-Disposition": "attachment;filename=registros.csv"
     }
 
-@app.route("/eliminar-registro", methods=["POST"])
-def eliminar_registro():
-    if not session.get("admin"):
-        return jsonify({"status": "error"}), 403
-    registro_id = request.json.get("id")
-    try:
-        supabase.table("registros").delete().eq("id", registro_id).execute()
-        return jsonify({"status": "success"})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 500
-
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", 5000))
     app.run(host="0.0.0.0", port=port)
