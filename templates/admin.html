@@ -161,33 +161,6 @@
       <div class="tab-content mt-4" id="adminTabsContent">
         <div class="tab-pane fade show active" id="historial" role="tabpanel">
           <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
-          <div id="registroModal" class="modal">
-            <div class="modal-content">
-              <span class="close-button">&times;</span>
-              <h2>Editar Registro</h2>
-              <div class="modal-body">
-                <form id="editarRegistroForm">
-                  <div>
-                    <label for="editNombre">Nombre</label>
-                    <input type="text" id="editNombre" name="nombre" required>
-                  </div>
-                  <div>
-                    <label for="editAccion">Acción</label>
-                    <select id="editAccion" name="accion">
-                      <option value="Clock In">Clock In</option>
-                      <option value="Clock Out">Clock Out</option>
-                    </select>
-                  </div>
-                  <div>
-                    <label for="editTimestamp">Fecha y Hora</label>
-                    <input type="datetime-local" id="editTimestamp" name="timestamp" required>
-                  </div>
-                  <input type="hidden" id="editId" name="id">
-                  <button type="submit">Guardar Cambios</button>
-                </form>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="tab-pane fade" id="empleados" role="tabpanel">
           <form action="/agregar-empleado" method="POST" class="mt-3 row g-2">
@@ -201,26 +174,6 @@
               <button type="submit" class="btn btn-primary w-100">Agregar</button>
             </div>
           </form>
-          <div id="empleadoModal" class="modal">
-            <div class="modal-content">
-              <span class="close-button">&times;</span>
-              <h2>Editar Empleado</h2>
-              <div class="modal-body">
-                <form id="editarEmpleadoForm">
-                  <div>
-                    <label for="editEmpleadoNombre">Nombre</label>
-                    <input type="text" id="editEmpleadoNombre" name="nombre" required>
-                  </div>
-                  <div>
-                    <label for="editEmpleadoPin">PIN</label>
-                    <input type="text" id="editEmpleadoPin" name="pin" required>
-                  </div>
-                  <input type="hidden" id="editEmpleadoId" name="id">
-                  <button type="submit">Guardar Cambios</button>
-                </form>
-              </div>
-            </div>
-          </div>
         </div>
         <div class="tab-pane fade" id="gestion" role="tabpanel">
           <div class="table-responsive" id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
@@ -240,26 +193,7 @@
     let registrosData = [];
     let empleadosData = [];
 
-    function openRegistroModal(id) {
-      const registro = registrosData.find(r => r.id === id);
-      if (registro) {
-        document.getElementById("editNombre").value = registro.nombre;
-        document.getElementById("editAccion").value = registro.accion;
-        document.getElementById("editTimestamp").value = registro.timestamp.replace(" ", "T");
-        document.getElementById("editId").value = id;
-        registroModal.style.display = "block";
-      }
-    }
 
-    function openEmpleadoModal(id) {
-      const empleado = empleadosData.find(e => e.id === id);
-      if (empleado) {
-        document.getElementById("editEmpleadoNombre").value = empleado.nombre;
-        document.getElementById("editEmpleadoPin").value = empleado.pin;
-        document.getElementById("editEmpleadoId").value = id;
-        empleadoModal.style.display = "block";
-      }
-    }
 
     closeRegistroModal.onclick = function() {
       registroModal.style.display = "none";
@@ -278,93 +212,32 @@
       }
     }
 
-    editarRegistroForm.onsubmit = async (event) => {
-      event.preventDefault();
-      const id = document.getElementById("editId").value;
-      const nombre = document.getElementById("editNombre").value;
-      const accion = document.getElementById("editAccion").value;
-      const timestamp = document.getElementById("editTimestamp").value.replace("T", " ");
 
-      const response = await fetch('/editar-registro', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, nombre, accion, timestamp })
-      });
-
-      if (response.ok) {
-        alert('Registro modificado con éxito.');
-        cargarHistorial();
-        registroModal.style.display = "none";
-      } else {
-        alert('Error al modificar el registro.');
-      }
-    }
-
-    editarEmpleadoForm.onsubmit = async (event) => {
-      event.preventDefault();
-      const id = document.getElementById("editEmpleadoId").value;
-      const nombre = document.getElementById("editEmpleadoNombre").value;
-      const pin = document.getElementById("editEmpleadoPin").value;
-
-      const response = await fetch('/editar-empleado', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, nombre, pin })
-      });
-
-      if (response.ok) {
-        alert('Empleado modificado con éxito.');
-        cargarEmpleados();
-        empleadoModal.style.display = "none";
-      } else {
-        alert('Error al modificar el empleado.');
-      }
-    }
 
     async function cargarHistorial() {
       const res = await fetch('/registros');
       registrosData = await res.json();
-      let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th><th>Editar</th></tr></thead><tbody>";
+      let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th><th>Eliminar</th></tr></thead><tbody>";
       registrosData.forEach(r => {
-        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td><td><button class='btn btn-sm btn-primary' data-id='${r.id}'>Editar</button></td></tr>`;
+        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarRegistro('${r.id}')">Eliminar</button></td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaHistorial").innerHTML = html;
 
-      // Attach event listeners to the "Editar" buttons after they are added to the DOM
-      const editButtons = document.querySelectorAll("#tablaHistorial .btn-primary");
-      editButtons.forEach(button => {
-        if(!button.listenterAttached) { // added if condition
-            button.addEventListener("click", () => {
-            const id = parseInt(button.dataset.id);
-            openRegistroModal(id);
-          });
-          button.listenterAttached = true; // added this line
-        }
-      });
+
     }
 
     async function cargarEmpleados() {
       const res = await fetch('/empleados');
       empleadosData = await res.json();
-      let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th><th>Editar</th></tr></thead><tbody>";
+      let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th></tr></thead><tbody>";
       empleadosData.forEach(e => {
-        html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td><td><button class='btn btn-sm btn-primary' data-id='${e.id}'>Editar</button></td></tr>`;
+        html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaEmpleados").innerHTML = html;
 
-      // Attach event listeners to the "Editar" buttons after they are added to the DOM
-      const editButtons = document.querySelectorAll("#tablaEmpleados .btn-primary");
-      editButtons.forEach(button => {
-        if(!button.listenterAttached) { // added if condition
-            button.addEventListener("click", () => {
-            const id = parseInt(button.dataset.id);
-            openEmpleadoModal(id);
-          });
-          button.listenterAttached = true; // added this line
-        }
-      });
+
     }
 
     async function eliminarEmpleado(nombre) {
@@ -375,6 +248,16 @@
         body: JSON.stringify({ nombre })
       });
       cargarEmpleados();
+    }
+
+    async function eliminarRegistro(id) {
+      if (!confirm(`¿Eliminar este registro?`)) return;
+      await fetch('/eliminar-registro', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      });
+      cargarHistorial();
     }
 
     cargarHistorial();
