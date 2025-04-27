@@ -1,5 +1,7 @@
-flask
-flask-cors
-supabase
-python-dotenv
-pytz
+# filename: requirements.txt
+flask==2.3.3
+flask-cors==4.0.0
+supabase==1.0.3  # Check for the latest stable version you are using
+python-dotenv==1.0.0
+pytz==2023.3.post1
+gunicorn==21.2.0 # Added: Recommended WSGI server for production
