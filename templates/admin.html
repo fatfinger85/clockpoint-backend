@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="es">
 <head>
@@ -326,10 +325,19 @@
       registrosData = await res.json();
       let html = "<table class='table table-bordered table-striped'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha</th><th>Editar</th></tr></thead><tbody>";
       registrosData.forEach(r => {
-        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td><td><button class='btn btn-sm btn-primary' onclick="openRegistroModal(${r.id})">Editar</button></td></tr>`;
+        html += `<tr><td>${r.nombre}</td><td>${r.accion}</td><td>${r.timestamp}</td><td><button class='btn btn-sm btn-primary' data-id='${r.id}'>Editar</button></td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaHistorial").innerHTML = html;
+
+      // Attach event listeners to the "Editar" buttons after they are added to the DOM
+      const editButtons = document.querySelectorAll("#tablaHistorial .btn-primary");
+      editButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          const id = parseInt(button.dataset.id); //changed from button.dataset.id to parseInt(button.dataset.id)
+          openRegistroModal(id);
+        });
+      });
     }
 
     async function cargarEmpleados() {
@@ -337,10 +345,19 @@
       empleadosData = await res.json();
       let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Eliminar</th><th>Editar</th></tr></thead><tbody>";
       empleadosData.forEach(e => {
-        html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td><td><button class='btn btn-sm btn-primary' onclick="openEmpleadoModal(${e.id})">Editar</button></td></tr>`;
+        html += `<tr><td>${e.nombre}</td><td>${e.pin}</td><td><button class='btn btn-sm btn-danger' onclick="eliminarEmpleado('${e.nombre}')">Eliminar</button></td><td><button class='btn btn-sm btn-primary' data-id='${e.id}'>Editar</button></td></tr>`;
       });
       html += "</tbody></table>";
       document.getElementById("tablaEmpleados").innerHTML = html;
+
+      // Attach event listeners to the "Editar" buttons after they are added to the DOM
+      const editButtons = document.querySelectorAll("#tablaEmpleados .btn-primary");
+      editButtons.forEach(button => {
+        button.addEventListener("click", () => {
+          const id = parseInt(button.dataset.id);  //changed from button.dataset.id to parseInt(button.dataset.id)
+          openEmpleadoModal(id);
+        });
+      });
     }
 
     async function eliminarEmpleado(nombre) {
