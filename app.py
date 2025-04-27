@@ -1,4 +1,3 @@
-
 from flask import Flask, request, jsonify, redirect, render_template, session
 from flask_cors import CORS
 from supabase import create_client, Client
