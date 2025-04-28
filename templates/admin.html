@@ -2,107 +2,265 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-  <meta charset="UTF-8">
-  <title>ClockPoint - Panel Admin</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1">
-  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-  <style>
-    body { background-color: #f8f9fa; }
-    .nav-tabs .nav-link.active { background-color: #0d6efd; color: white; }
-    .nav-tabs .nav-link { color: #0d6efd; }
-    .card { border-radius: 12px; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); }
-    .table { border-radius: 8px; overflow: hidden; }
-    th { background-color: #e9ecef; }
-    #admin-alert-placeholder { min-height: 50px; /* Prevent layout shift */}
-    @media (max-width: 576px) {
-      .card { padding: 20px; }
-      .nav-tabs .nav-link { font-size: 0.9rem; padding: 0.5rem; }
-      .table-responsive { overflow-x: auto; }
-    }
-  </style>
+    <meta charset="UTF-8">
+    <title>ClockPoint - Panel Admin</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+    <style>
+        /* General body styling */
+        body {
+            background-color: #f8f9fa; /* Light background */
+            padding-top: 2rem;
+            padding-bottom: 2rem;
+        }
+        /* Main content card styling */
+        .main-card {
+            border-radius: 0.75rem; /* Slightly softer corners */
+            box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.07); /* Softer shadow */
+            border: none; /* Remove default card border */
+            overflow: hidden; /* Ensure child elements respect border-radius */
+        }
+        /* Card header styling */
+        .main-card .card-header {
+             background-color: #e9ecef; /* Light header background */
+             border-bottom: 1px solid #dee2e6;
+             padding-top: 1.25rem;
+             padding-bottom: 1.25rem;
+        }
+        /* Card body styling */
+         .main-card .card-body {
+             padding: 2rem; /* More padding inside card body */
+        }
+        /* Tab navigation styling */
+        .nav-tabs {
+            border-bottom: 1px solid #dee2e6;
+            margin-bottom: 1.5rem; /* Space below tabs */
+        }
+        /* Individual tab link styling */
+        .nav-tabs .nav-link {
+            color: #495057; /* Darker inactive tab text */
+            border: 1px solid transparent;
+            border-top-left-radius: 0.375rem;
+            border-top-right-radius: 0.375rem;
+            padding: 0.75rem 1rem; /* Adjust tab padding */
+            font-weight: 500;
+            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out; /* Smooth transition */
+        }
+        /* Tab link hover state */
+        .nav-tabs .nav-link:hover {
+            border-color: #e9ecef #e9ecef #dee2e6;
+            background-color: #e9ecef; /* Subtle hover */
+            color: #0d6efd;
+        }
+        /* Active tab link styling */
+        .nav-tabs .nav-link.active {
+            color: #fff; /* White text for active tab */
+            background-color: #0d6efd; /* Primary color background */
+            border-color: #0d6efd #0d6efd #fff; /* Match border */
+            border-bottom: 1px solid #0d6efd; /* Ensure bottom border matches bg */
+        }
+        /* Styling for icons within tab links */
+        .nav-tabs .nav-link .bi {
+            margin-right: 0.4rem;
+            vertical-align: text-bottom; /* Align icon nicely with text */
+        }
+        /* Table general styling */
+        .table {
+            margin-bottom: 0; /* Remove default margin */
+            border: 1px solid #dee2e6; /* Add subtle border */
+            border-radius: 0.375rem; /* Rounded corners for table */
+            overflow: hidden; /* Ensure border-radius is applied */
+        }
+        /* Table header styling */
+        .table thead th {
+            background-color: #f8f9fa; /* Lighter table header */
+            border-bottom-width: 1px; /* Thinner bottom border */
+            font-weight: 600;
+            color: #495057;
+            white-space: nowrap; /* Prevent header text wrapping */
+        }
+        /* Table row hover effect */
+        .table-hover tbody tr:hover {
+            background-color: rgba(13, 110, 253, 0.05); /* Subtle blue hover */
+        }
+        /* Form section container styling */
+        .form-section {
+            background-color: #fff; /* White background for forms */
+            padding: 1.5rem;
+            border-radius: 0.5rem;
+            border: 1px solid #e9ecef;
+            margin-bottom: 1.5rem; /* Space below form sections */
+        }
+        /* Alert message placeholder styling */
+        #admin-alert-placeholder {
+            min-height: 50px; /* Prevent layout shift when empty */
+            margin-bottom: 1rem; /* Space below alerts */
+        }
+        /* Styling for buttons within tables */
+        .table button {
+            margin-left: 5px; /* Spacing for buttons in tables */
+        }
+        /* Styling for loading indicators */
+        .loading-indicator {
+             display: flex;
+             justify-content: center;
+             align-items: center;
+             padding: 1.5rem;
+             color: #6c757d; /* Muted text color */
+        }
+        .loading-indicator .spinner-border {
+             margin-right: 0.5rem;
+        }
+        /* Responsive adjustments for smaller screens */
+        @media (max-width: 576px) {
+            .main-card .card-body { padding: 1.5rem; }
+            .nav-tabs .nav-link { font-size: 0.85rem; padding: 0.6rem 0.8rem; }
+            .form-section { padding: 1rem; }
+            /* Stack form buttons below inputs on small screens */
+            #add-project-form .col-md-2, #add-employee-form .col-md-2 {
+                margin-top: 0.5rem;
+            }
+        }
+    </style>
 </head>
 <body>
-  <div class="container py-5">
-    <div class="card p-4">
-      <h2 class="text-center mb-4 text-primary">Panel de Administración</h2>
-
-      <div id="admin-alert-placeholder"></div>
-
-      <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-        <li class="nav-item" role="presentation">
-          <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab">🕓 Historial</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab">➕ Agregar Empleado</button>
-        </li>
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">👥 Gestionar Empleados</button>
-        </li>
-        <li class="nav-item">
-          <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
-        </li>
-      </ul>
-
-      <div class="tab-content mt-4" id="adminTabsContent">
-        <div class="tab-pane fade show active" id="historial" role="tabpanel">
-          <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
-        </div>
-        <div class="tab-pane fade" id="empleados" role="tabpanel">
-          <form id="add-employee-form" action="/agregar-empleado" method="POST" class="mt-3 row g-2">
-            <div class="col-md-5">
-              <input type="text" name="nombre" placeholder="Nombre" required class="form-control" aria-label="Nombre del nuevo empleado">
-            </div>
-            <div class="col-md-5">
-              <input type="text" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado"> </div>
-            <div class="col-md-2">
-              <button type="submit" class="btn btn-primary w-100">Agregar</button>
-            </div>
-          </form>
-        </div>
-        <div class="tab-pane fade" id="gestion" role="tabpanel">
-          <div class="table-responsive" id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
-        </div>
+  <div class="container py-4"> <div class="card main-card">
+      <div class="card-header text-center">
+         <h2 class="mb-0 text-primary">Panel de Administración</h2>
       </div>
-    </div>
-  </div>
+      <div class="card-body">
 
+          <div id="admin-alert-placeholder"></div>
+
+          <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+            <li class="nav-item" role="presentation">
+              <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab"><i class="bi bi-clock-history"></i> Historial</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab"><i class="bi bi-person-plus-fill"></i> Agregar Empleado</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab"><i class="bi bi-people-fill"></i> Gestionar Empleados</button>
+            </li>
+            <li class="nav-item" role="presentation">
+              <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab"><i class="bi bi-folder-fill"></i> Proyectos</button>
+            </li>
+            <li class="nav-item ms-auto">
+              <a class="nav-link text-success" href="/exportar" target="_blank"><i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar CSV</a>
+            </li>
+          </ul>
+
+          <div class="tab-content pt-3" id="adminTabsContent"> <div class="tab-pane fade show active" id="historial" role="tabpanel" aria-labelledby="historial-tab">
+               <h4 class="mb-3">Historial de Registros</h4>
+               <div class="table-responsive" id="tablaHistorial">
+                   <div class="loading-indicator">
+                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...
+                   </div>
+               </div>
+            </div>
+
+            <div class="tab-pane fade" id="empleados" role="tabpanel" aria-labelledby="empleados-tab">
+              <div class="form-section">
+                 <h5 class="mb-3">Agregar Nuevo Empleado</h5>
+                 <form id="add-employee-form" action="/agregar-empleado" method="POST" class="row g-3 needs-validation" novalidate>
+                    <div class="col-md-5">
+                      <label for="add-emp-nombre" class="form-label">Nombre Empleado</label>
+                      <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre completo" required class="form-control">
+                      <div class="invalid-feedback">Por favor ingresa un nombre.</div>
+                    </div>
+                    <div class="col-md-5">
+                      <label for="add-emp-pin" class="form-label">PIN</label>
+                      <input type="text" id="add-emp-pin" name="pin" pattern="\d+" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control">
+                      <div class="invalid-feedback">Por favor ingresa un PIN numérico.</div>
+                    </div>
+                    <div class="col-md-2 d-flex align-items-end">
+                      <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                    </div>
+                 </form>
+              </div>
+            </div>
+
+             <div class="tab-pane fade" id="gestion" role="tabpanel" aria-labelledby="gestion-tab">
+               <h4 class="mb-3">Lista de Empleados</h4> <div class="table-responsive" id="tablaEmpleados">
+                   <div class="loading-indicator">
+                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...
+                   </div>
+               </div>
+            </div>
+
+
+            <div class="tab-pane fade" id="proyectos" role="tabpanel" aria-labelledby="proyectos-tab">
+              <div class="form-section">
+                 <h5 class="mb-3">Agregar Nuevo Proyecto</h5>
+                 <form id="add-project-form" action="/agregar-proyecto" method="POST" class="row g-3 needs-validation" novalidate>
+                    <div class="col-md-10">
+                       <label for="add-proj-nombre" class="form-label">Nombre Proyecto</label>
+                       <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del proyecto" required class="form-control">
+                       <div class="invalid-feedback">Por favor ingresa un nombre de proyecto.</div>
+                    </div>
+                     <div class="col-md-2 d-flex align-items-end">
+                       <button type="submit" class="btn btn-primary w-100">Agregar</button>
+                    </div>
+                 </form>
+              </div>
+              <h5 class="mt-4 mb-3">Lista de Proyectos</h5> <div class="table-responsive" id="tablaProyectos">
+                   <div class="loading-indicator">
+                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...
+                   </div>
+              </div>
+            </div>
+
+          </div> </div> </div> </div>
   <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog">
-      <div class="modal-content">
-        <div class="modal-header">
+    <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header">
           <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          ¿Estás seguro de que quieres eliminar al empleado <strong id="employeeNameToDelete"></strong>? Esta acción no se puede deshacer.
+          ¿Estás seguro de que quieres eliminar <strong id="itemNameToDelete">[Item Name]</strong>? Esta acción no se puede deshacer.
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
-        </div>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button> </div>
       </div>
     </div>
   </div>
-
-
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+
   <script>
+    // --- DOM Element References ---
     const tablaHistorial = document.getElementById("tablaHistorial");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
+    const tablaProyectos = document.getElementById("tablaProyectos");
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
-    let deleteConfirmModal = null; // Initialize modal variable
-    let employeeToDelete = null;   // Store name of employee to delete
+    // References for modal (kept in case needed elsewhere, but not used by employee/project tables now)
+    const itemNameToDeleteSpan = document.getElementById('itemNameToDelete');
+    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    let deleteConfirmModal = null;
+    let deleteAction = null; // Function to execute on delete confirmation
 
-    // --- Alert Helper ---
+    // --- Utility Function: Escape HTML ---
+    function escapeHtml(unsafe) {
+       if (typeof unsafe !== 'string') return '';
+       return unsafe
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    }
+
+    // --- Alert Helper Functions ---
     function showAdminAlert(message, type = 'danger') {
       const wrapper = document.createElement('div');
       wrapper.innerHTML = [
         `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
-        `   <div>${message}</div>`,
+        `   <div>${escapeHtml(message)}</div>`,
         '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
         '</div>'
       ].join('');
-      adminAlertPlaceholder.innerHTML = ''; // Clear previous alerts
+      adminAlertPlaceholder.innerHTML = '';
       adminAlertPlaceholder.append(wrapper);
     }
     function clearAdminAlert() {
@@ -111,190 +269,261 @@
 
     // --- Data Loading Functions ---
     async function cargarHistorial() {
-      tablaHistorial.innerHTML = 'Cargando historial...';
+      tablaHistorial.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
           const res = await fetch('/registros');
-          if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
           const data = await res.json();
-
-          if (data.error) {
-              throw new Error(data.error);
-          }
-
+          if (data.error) { throw new Error(data.error); }
+          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
           if (data.length === 0) {
-              tablaHistorial.innerHTML = '<p class="text-muted text-center">No hay registros de historial.</p>';
-              return;
+              tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>'; return;
           }
-
-          let html = "<table class='table table-bordered table-striped table-hover'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th></tr></thead><tbody>";
+          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>";
           data.forEach(r => {
-            // Basic sanitation or ensure data is safe if sourced externally
             const nombre = r.nombre || '';
             const accion = r.accion || '';
             const timestamp = r.timestamp || '';
-            html += `<tr><td>${escapeHtml(nombre)}</td><td>${escapeHtml(accion)}</td><td>${escapeHtml(timestamp)}</td></tr>`;
+            const proyecto = r.proyecto || '-';
+            html += `<tr>
+                        <td>${escapeHtml(nombre)}</td>
+                        <td>${escapeHtml(accion)}</td>
+                        <td>${escapeHtml(timestamp)}</td>
+                        <td>${escapeHtml(proyecto)}</td>
+                     </tr>`;
           });
           html += "</tbody></table>";
           tablaHistorial.innerHTML = html;
       } catch (error) {
           console.error("Error loading history:", error);
-          tablaHistorial.innerHTML = `<div class="alert alert-danger">Error al cargar el historial: ${error.message}</div>`;
+          tablaHistorial.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
       }
     }
 
+    // --- MODIFIED: Load Employees (No Delete Column/Button) ---
     async function cargarEmpleados() {
-      tablaEmpleados.innerHTML = 'Cargando empleados...';
+      tablaEmpleados.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
           const res = await fetch('/empleados');
-           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
           const data = await res.json();
-
-           if (data.error) {
-              throw new Error(data.error);
+          if (data.error) { throw new Error(data.error); }
+          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
+          if (data.length === 0) {
+              tablaEmpleados.innerHTML = '<p class="text-muted text-center p-3">No hay empleados registrados.</p>'; return;
           }
-
-           if (data.length === 0) {
-              tablaEmpleados.innerHTML = '<p class="text-muted text-center">No hay empleados registrados.</p>';
-              return;
-          }
-
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
+          // Removed "Acciones" header
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
           data.forEach(e => {
             const nombre = e.nombre || '';
-            const pin = e.pin || ''; // Be careful about displaying PINs, even in admin
+            const pin = e.pin || '';
+            // Removed delete button cell
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
-                      <td><button class='btn btn-sm btn-danger' onclick="confirmDeleteEmployee('${escapeHtml(nombre)}')">Eliminar</button></td>
                     </tr>`;
           });
           html += "</tbody></table>";
           tablaEmpleados.innerHTML = html;
       } catch (error) {
           console.error("Error loading employees:", error);
-          tablaEmpleados.innerHTML = `<div class="alert alert-danger">Error al cargar los empleados: ${error.message}</div>`;
+          tablaEmpleados.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los empleados: ${escapeHtml(error.message)}</div>`;
       }
     }
 
-    // --- Delete Employee Logic ---
-    function confirmDeleteEmployee(nombre) {
-        employeeToDelete = nombre; // Store the name
-        document.getElementById('employeeNameToDelete').textContent = nombre; // Update modal text
-        if (deleteConfirmModal) {
-            deleteConfirmModal.show(); // Show the modal
-        }
+    // --- MODIFIED: Load Projects (No Delete Column/Button) ---
+    async function cargarProyectos() {
+      tablaProyectos.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
+      try {
+          const res = await fetch('/proyectos');
+          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+          const data = await res.json();
+          if (data.error) { throw new Error(data.error); }
+          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
+          if (data.length === 0) {
+              tablaProyectos.innerHTML = '<p class="text-muted text-center p-3">No hay proyectos registrados.</p>';
+              return;
+          }
+          // Removed "Acciones" header
+          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
+          data.forEach(p => {
+            const nombre = p.nombre || '';
+            // Removed delete button cell
+            html += `<tr>
+                      <td>${escapeHtml(nombre)}</td>
+                    </tr>`;
+          });
+          html += "</tbody></table>";
+          tablaProyectos.innerHTML = html;
+      } catch (error) {
+          console.error("Error loading projects:", error);
+          tablaProyectos.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los proyectos: ${escapeHtml(error.message)}</div>`;
+      }
     }
 
-    async function performDelete() {
-        if (!employeeToDelete) return;
-
+    // --- Delete Logic (Kept for potential future use, but not called by employee/project tables) ---
+    function confirmDeleteItem(buttonElement, itemType) {
+        // This function is no longer called by the employee/project tables
+        // but is kept here in case it's needed for other features later.
+        console.log(`confirmDeleteItem called for type: ${itemType}`);
+        const itemName = buttonElement.getAttribute('data-name');
+        if (!itemNameToDeleteSpan || !deleteConfirmModal) {
+             console.error("Modal elements not found or modal not initialized."); return;
+        }
+        if (!itemName) { console.error("Item name not found."); return; }
+        itemNameToDeleteSpan.textContent = itemName;
+        if (itemType === 'employee') { // Example: Still define action if needed
+            deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
+        } else if (itemType === 'project') {
+             deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
+        } else { console.error("Unknown item type:", itemType); return; }
+        deleteConfirmModal.show();
+    }
+    async function performDelete(endpoint, name, refreshFunction) {
+        // This function is no longer called by the employee/project tables
+        console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
+        if (!name || !endpoint || !refreshFunction) return;
         clearAdminAlert();
+        const deleteBtn = document.getElementById('confirmDeleteBtn');
+        if(deleteBtn) deleteBtn.disabled = true;
         try {
-            const response = await fetch('/eliminar-empleado', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: employeeToDelete })
+            const response = await fetch(endpoint, {
+                method: 'POST', headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ nombre: name })
             });
             const result = await response.json();
-
             if (response.ok && result.status === 'success') {
-                showAdminAlert(`Empleado '${employeeToDelete}' eliminado correctamente.`, 'success');
-                cargarEmpleados(); // Refresh the employee list
-            } else {
-                throw new Error(result.message || 'Error desconocido al eliminar');
-            }
+                showAdminAlert(`${name} eliminado correctamente.`, 'success');
+                refreshFunction();
+            } else { throw new Error(result.message || `Error ${response.status}`); }
         } catch (error) {
-            console.error("Error deleting employee:", error);
-            showAdminAlert(`Error al eliminar empleado: ${error.message}`, 'danger');
+            console.error(`Error deleting ${name}:`, error);
+            showAdminAlert(`Error al eliminar ${name}: ${escapeHtml(error.message)}`, 'danger');
         } finally {
-             if (deleteConfirmModal) {
-                deleteConfirmModal.hide(); // Hide modal regardless of outcome
-             }
-            employeeToDelete = null; // Reset stored name
+             if (deleteConfirmModal) deleteConfirmModal.hide();
+             if(deleteBtn) deleteBtn.disabled = false;
+             deleteAction = null;
         }
     }
 
-    // --- Add Employee Form Handling ---
-    document.getElementById('add-employee-form').addEventListener('submit', async function(event) {
-        event.preventDefault(); // Prevent default form submission
+    // --- Unified Form Submission Handling ---
+    // (No changes needed in handleFormSubmit)
+    async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
+        event.preventDefault();
         clearAdminAlert();
+        const form = event.target;
+        const formData = new FormData(form);
+        let isValid = true;
+        let formType = form.id === 'add-employee-form' ? 'employee' : (form.id === 'add-project-form' ? 'project' : '');
 
-        const formData = new FormData(this);
-        const nombre = formData.get('nombre');
-        const pin = formData.get('pin');
-
-        // Basic client-side validation (complementing server-side)
-        if (!nombre || !pin) {
-            showAdminAlert('Nombre y PIN son requeridos.', 'warning');
-            return;
+        form.classList.remove('was-validated');
+        for (let [key, value] of formData.entries()) {
+           let trimmedValue = typeof value === 'string' ? value.trim() : value;
+           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !trimmedValue) ||
+               (formType === 'project' && key === 'nombre_proyecto' && !trimmedValue)) {
+                 isValid = false; break;
+            }
+           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(trimmedValue)) {
+                showAdminAlert('PIN debe ser numérico.', 'warning');
+                form.classList.add('was-validated');
+                return;
+           }
         }
-         if (!/^\d+$/.test(pin)) {
-            showAdminAlert('PIN debe ser numérico.', 'warning');
-            return;
+        form.classList.add('was-validated');
+        if (!form.checkValidity() || !isValid) {
+             event.stopPropagation();
+             showAdminAlert('Por favor, corrige los errores en el formulario.', 'warning');
+             return;
         }
+        const submitButton = form.querySelector('button[type="submit"]');
+        if (submitButton) submitButton.disabled = true;
 
         try {
-            const response = await fetch('/agregar-empleado', {
-                method: 'POST',
-                body: formData // Send form data directly
-            });
-
-            // Check if redirect indicates success (status 200 after redirect)
-            // Or handle potential error messages returned directly
+            const response = await fetch(endpoint, { method: 'POST', body: formData });
             if (response.ok && response.redirected) {
-                 showAdminAlert(`Empleado '${nombre}' agregado correctamente.`, 'success');
-                 this.reset(); // Clear the form
-                 cargarEmpleados(); // Refresh list
-                 // Optionally switch tab: new bootstrap.Tab(document.getElementById('gestion-tab')).show();
+                const redirectedUrl = new URL(response.url);
+                const successParam = redirectedUrl.searchParams.get('success');
+                const errorParam = redirectedUrl.searchParams.get('error');
+                if (errorParam) throw new Error(errorParam);
+                showAdminAlert(successParam || successMessage, 'success');
+                form.reset();
+                form.classList.remove('was-validated');
+                refreshFunction();
+                if (redirectedUrl.hash) handleUrlHash(redirectedUrl.hash);
+            } else if (!response.ok) {
+                 const errorText = await response.text();
+                 throw new Error(errorText || `Error ${response.status}`);
             } else {
-                // Try to read error text from response if not redirected
-                const errorText = await response.text();
-                throw new Error(errorText || `Error ${response.status} al agregar empleado.`);
+                 showAdminAlert(successMessage, 'success'); form.reset(); form.classList.remove('was-validated'); refreshFunction();
             }
         } catch (error) {
-             console.error("Error adding employee:", error);
-             showAdminAlert(`Error al agregar empleado: ${error.message}`, 'danger');
+             console.error("Error submitting form:", error);
+             showAdminAlert(`Error: ${escapeHtml(error.message)}`, 'danger');
+        } finally {
+             if (submitButton) submitButton.disabled = false;
         }
-    });
+    }
 
-     // --- Utility Function ---
-     function escapeHtml(unsafe) {
-        if (typeof unsafe !== 'string') return '';
-        return unsafe
-             .replace(/&/g, "&amp;")
-             .replace(/</g, "&lt;")
-             .replace(/>/g, "&gt;")
-             .replace(/"/g, "&quot;")
-             .replace(/'/g, "&#039;");
+
+    // --- URL Hash Handling ---
+     function handleUrlHash(hashValue = window.location.hash) {
+        const hash = hashValue;
+        if (hash) {
+            const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
+            if (tabButton) {
+                try {
+                   const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+                   if (tab && !tabButton.classList.contains('active')) tab.show();
+                } catch (e) { console.warn("Bootstrap Tab component error:", e); }
+            }
+        }
      }
-
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
-        // Initialize the modal instance
-        deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
+        // Initialize Modal (still needed if confirmDeleteItem is kept)
+        try {
+            const modalElement = document.getElementById('deleteConfirmModal');
+            if (modalElement) {
+                deleteConfirmModal = new bootstrap.Modal(modalElement);
+            } else { console.error("Delete confirmation modal element not found in DOM."); }
 
-        // Attach the delete action to the modal's confirm button
-        document.getElementById('confirmDeleteBtn').addEventListener('click', performDelete);
+             if (confirmDeleteBtn) {
+                 confirmDeleteBtn.addEventListener('click', () => {
+                    if (typeof deleteAction === 'function') { deleteAction(); }
+                    else { console.error("No delete action specified for modal confirmation."); }
+                });
+             } else { console.error("Confirm delete button ('confirmDeleteBtn') not found in DOM."); }
 
-        // Initial data load
+        } catch(e) { console.error("Failed to initialize Bootstrap modal or attach listener:", e); }
+
+        // Attach Form Handlers
+        const addEmployeeForm = document.getElementById('add-employee-form');
+        const addProjectForm = document.getElementById('add-project-form');
+        if (addEmployeeForm) addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
+        if (addProjectForm) addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
+
+        // Initial Data Loads
         cargarHistorial();
-        cargarEmpleados();
+        cargarEmpleados(); // Will load employees without delete button
+        cargarProyectos(); // Will load projects without delete button
 
-        // Check for success/error messages from redirects (e.g., after adding employee)
+        // Handle URL Params/Hash
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
+        const currentHash = window.location.hash;
         if (successMsg) {
             showAdminAlert(successMsg, 'success');
-            // Clean the URL
-            window.history.replaceState({}, document.title, window.location.pathname);
+            window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         } else if (errorMsg) {
              showAdminAlert(errorMsg, 'danger');
-              window.history.replaceState({}, document.title, window.location.pathname);
+             window.history.replaceState({}, document.title, window.location.pathname + currentHash);
         }
+        handleUrlHash();
+        window.addEventListener('hashchange', () => handleUrlHash(), false);
+        if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
     });
-
 
   </script>
 </body>
