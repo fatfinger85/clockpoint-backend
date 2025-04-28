@@ -9,17 +9,15 @@
   <style>
     body { background-color: #f8f9fa; }
     .nav-tabs .nav-link.active { background-color: #0d6efd; color: white; }
-    .nav-tabs .nav-link { color: #0d6efd; cursor: pointer; } /* Added cursor pointer */
+    .nav-tabs .nav-link { color: #0d6efd; }
     .card { border-radius: 12px; box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.05); }
     .table { border-radius: 8px; overflow: hidden; }
     th { background-color: #e9ecef; }
     #admin-alert-placeholder { min-height: 50px; /* Prevent layout shift */}
-    .table button { margin-left: 5px; } /* Spacing for buttons in tables */
     @media (max-width: 576px) {
       .card { padding: 20px; }
       .nav-tabs .nav-link { font-size: 0.9rem; padding: 0.5rem; }
       .table-responsive { overflow-x: auto; }
-      #add-project-form .btn, #add-employee-form .btn { margin-top: 0.5rem; } /* Stack button below inputs */
     }
   </style>
 </head>
@@ -40,55 +38,30 @@
         <li class="nav-item" role="presentation">
           <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab">👥 Gestionar Empleados</button>
         </li>
-        {/* */}
-        <li class="nav-item" role="presentation">
-          <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab">📁 Proyectos</button>
-        </li>
-        <li class="nav-item ms-auto"> {/* Pushed export link to the right */}
+        <li class="nav-item">
           <a class="nav-link text-success" href="/exportar" target="_blank">📤 Exportar CSV</a>
         </li>
       </ul>
 
       <div class="tab-content mt-4" id="adminTabsContent">
-        {/* Historial Pane */}
         <div class="tab-pane fade show active" id="historial" role="tabpanel">
           <div class="table-responsive" id="tablaHistorial">Cargando historial...</div>
         </div>
-        {/* Add Employee Pane */}
         <div class="tab-pane fade" id="empleados" role="tabpanel">
           <form id="add-employee-form" action="/agregar-empleado" method="POST" class="mt-3 row g-2">
             <div class="col-md-5">
-              <input type="text" name="nombre" placeholder="Nombre Empleado" required class="form-control" aria-label="Nombre del nuevo empleado">
+              <input type="text" name="nombre" placeholder="Nombre" required class="form-control" aria-label="Nombre del nuevo empleado">
             </div>
             <div class="col-md-5">
-              <input type="text" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado">
-            </div>
-            <div class="col-md-2 d-grid"> {/* Added d-grid for better button stacking on small screens */}
-              <button type="submit" class="btn btn-primary">Agregar</button>
+              <input type="text" name="pin" pattern="\d*" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control" aria-label="PIN del nuevo empleado"> </div>
+            <div class="col-md-2">
+              <button type="submit" class="btn btn-primary w-100">Agregar</button>
             </div>
           </form>
         </div>
-        {/* Manage Employees Pane */}
         <div class="tab-pane fade" id="gestion" role="tabpanel">
           <div class="table-responsive" id="tablaEmpleados" class="mt-3">Cargando empleados...</div>
         </div>
-
-        {/* */}
-        <div class="tab-pane fade" id="proyectos" role="tabpanel">
-          <h4 class="mb-3">Gestionar Proyectos</h4>
-          {/* Form to add project */}
-          <form id="add-project-form" action="/agregar-proyecto" method="POST" class="mb-4 row g-2">
-            <div class="col-md-10">
-              <input type="text" name="nombre_proyecto" placeholder="Nombre del Nuevo Proyecto" required class="form-control" aria-label="Nombre del nuevo proyecto">
-            </div>
-            <div class="col-md-2 d-grid"> {/* Added d-grid */}
-              <button type="submit" class="btn btn-primary">Agregar Proyecto</button>
-            </div>
-          </form>
-          {/* Table to display projects */}
-          <div class="table-responsive" id="tablaProyectos">Cargando proyectos...</div>
-        </div>
-
       </div>
     </div>
   </div>
@@ -101,12 +74,10 @@
           <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
         </div>
         <div class="modal-body">
-          {/* Content will be set dynamically by JS */}
-          ¿Estás seguro de que quieres eliminar <strong id="itemNameToDelete"></strong>? Esta acción no se puede deshacer.
+          ¿Estás seguro de que quieres eliminar al empleado <strong id="employeeNameToDelete"></strong>? Esta acción no se puede deshacer.
         </div>
         <div class="modal-footer">
           <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          {/* This button's action will be set dynamically by JS */}
           <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button>
         </div>
       </div>
@@ -116,19 +87,14 @@
 
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
   <script>
-    // --- DOM Elements ---
     const tablaHistorial = document.getElementById("tablaHistorial");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
-    const tablaProyectos = document.getElementById("tablaProyectos"); // New element
     const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
-    const itemNameToDeleteSpan = document.getElementById('itemNameToDelete'); // Updated ID
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
-    let deleteConfirmModal = null;
-    let deleteAction = null; // Store the function to call on delete confirmation
+    let deleteConfirmModal = null; // Initialize modal variable
+    let employeeToDelete = null;   // Store name of employee to delete
 
     // --- Alert Helper ---
     function showAdminAlert(message, type = 'danger') {
-      // ... (keep existing showAdminAlert function)
       const wrapper = document.createElement('div');
       wrapper.innerHTML = [
         `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
@@ -143,22 +109,29 @@
         adminAlertPlaceholder.innerHTML = '';
     }
 
-    // --- Data Loading ---
+    // --- Data Loading Functions ---
     async function cargarHistorial() {
-      // ... (keep existing cargarHistorial function)
       tablaHistorial.innerHTML = 'Cargando historial...';
       try {
           const res = await fetch('/registros');
           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           const data = await res.json();
 
-          if (data.error) { throw new Error(data.error); }
-          if (data.length === 0) {
-              tablaHistorial.innerHTML = '<p class="text-muted text-center">No hay registros de historial.</p>'; return;
+          if (data.error) {
+              throw new Error(data.error);
           }
+
+          if (data.length === 0) {
+              tablaHistorial.innerHTML = '<p class="text-muted text-center">No hay registros de historial.</p>';
+              return;
+          }
+
           let html = "<table class='table table-bordered table-striped table-hover'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th></tr></thead><tbody>";
           data.forEach(r => {
-            const nombre = r.nombre || ''; const accion = r.accion || ''; const timestamp = r.timestamp || '';
+            // Basic sanitation or ensure data is safe if sourced externally
+            const nombre = r.nombre || '';
+            const accion = r.accion || '';
+            const timestamp = r.timestamp || '';
             html += `<tr><td>${escapeHtml(nombre)}</td><td>${escapeHtml(accion)}</td><td>${escapeHtml(timestamp)}</td></tr>`;
           });
           html += "</tbody></table>";
@@ -170,24 +143,29 @@
     }
 
     async function cargarEmpleados() {
-      // ... (keep existing cargarEmpleados function)
       tablaEmpleados.innerHTML = 'Cargando empleados...';
       try {
           const res = await fetch('/empleados');
            if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
           const data = await res.json();
-           if (data.error) { throw new Error(data.error); }
-           if (data.length === 0) {
-              tablaEmpleados.innerHTML = '<p class="text-muted text-center">No hay empleados registrados.</p>'; return;
+
+           if (data.error) {
+              throw new Error(data.error);
           }
+
+           if (data.length === 0) {
+              tablaEmpleados.innerHTML = '<p class="text-muted text-center">No hay empleados registrados.</p>';
+              return;
+          }
+
           let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
           data.forEach(e => {
-            const nombre = e.nombre || ''; const pin = e.pin || '';
-            // Use data attributes for safer handling in JS
+            const nombre = e.nombre || '';
+            const pin = e.pin || ''; // Be careful about displaying PINs, even in admin
             html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'employee')">Eliminar</button></td>
+                      <td><button class='btn btn-sm btn-danger' onclick="confirmDeleteEmployee('${escapeHtml(nombre)}')">Eliminar</button></td>
                     </tr>`;
           });
           html += "</tbody></table>";
@@ -198,158 +176,89 @@
       }
     }
 
-    // --- NEW: Load Projects ---
-    async function cargarProyectos() {
-      tablaProyectos.innerHTML = 'Cargando proyectos...';
-      try {
-          const res = await fetch('/proyectos'); // Fetch from new endpoint
-           if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
-          const data = await res.json();
-           if (data.error) { throw new Error(data.error); }
-           if (data.length === 0) {
-              tablaProyectos.innerHTML = '<p class="text-muted text-center">No hay proyectos registrados.</p>';
-              return;
-          }
-          // Table structure for projects
-          let html = "<table class='table table-bordered table-hover'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
-          data.forEach(p => {
-            const nombre = p.nombre || '';
-            // Use data attributes for safer handling in JS
-            html += `<tr>
-                      <td>${escapeHtml(nombre)}</td>
-                      <td><button class='btn btn-sm btn-danger' data-name="${escapeHtml(nombre)}" onclick="confirmDeleteItem(this, 'project')">Eliminar</button></td>
-                    </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaProyectos.innerHTML = html;
-      } catch (error) {
-          console.error("Error loading projects:", error);
-          tablaProyectos.innerHTML = `<div class="alert alert-danger">Error al cargar los proyectos: ${error.message}</div>`;
-      }
-    }
-
-
-    // --- Unified Delete Logic ---
-    function confirmDeleteItem(buttonElement, itemType) {
-        const itemName = buttonElement.getAttribute('data-name'); // Get name from data attribute
-        if (!itemName) {
-            console.error("Could not determine item name for deletion.");
-            return;
-        }
-
-        itemNameToDeleteSpan.textContent = itemName; // Update modal text
-
-        // Set the delete action based on itemType
-        if (itemType === 'employee') {
-            deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
-        } else if (itemType === 'project') {
-            deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
-        } else {
-            console.error("Unknown item type for deletion:", itemType);
-            return;
-        }
-
+    // --- Delete Employee Logic ---
+    function confirmDeleteEmployee(nombre) {
+        employeeToDelete = nombre; // Store the name
+        document.getElementById('employeeNameToDelete').textContent = nombre; // Update modal text
         if (deleteConfirmModal) {
             deleteConfirmModal.show(); // Show the modal
         }
     }
 
-    async function performDelete(endpoint, name, refreshFunction) {
-        if (!name || !endpoint || !refreshFunction) return;
+    async function performDelete() {
+        if (!employeeToDelete) return;
 
         clearAdminAlert();
         try {
-            const response = await fetch(endpoint, {
+            const response = await fetch('/eliminar-empleado', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: name }) // Backend expects 'nombre' key
+                body: JSON.stringify({ nombre: employeeToDelete })
             });
             const result = await response.json();
 
             if (response.ok && result.status === 'success') {
-                showAdminAlert(`${name} eliminado correctamente.`, 'success');
-                refreshFunction(); // Refresh the corresponding list
+                showAdminAlert(`Empleado '${employeeToDelete}' eliminado correctamente.`, 'success');
+                cargarEmpleados(); // Refresh the employee list
             } else {
                 throw new Error(result.message || 'Error desconocido al eliminar');
             }
         } catch (error) {
-            console.error(`Error deleting ${name}:`, error);
-            showAdminAlert(`Error al eliminar ${name}: ${error.message}`, 'danger');
+            console.error("Error deleting employee:", error);
+            showAdminAlert(`Error al eliminar empleado: ${error.message}`, 'danger');
         } finally {
              if (deleteConfirmModal) {
                 deleteConfirmModal.hide(); // Hide modal regardless of outcome
              }
-            deleteAction = null; // Reset action
+            employeeToDelete = null; // Reset stored name
         }
     }
 
-
-    // --- Form Submission Handling ---
-    async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
+    // --- Add Employee Form Handling ---
+    document.getElementById('add-employee-form').addEventListener('submit', async function(event) {
         event.preventDefault(); // Prevent default form submission
         clearAdminAlert();
 
-        const form = event.target;
-        const formData = new FormData(form);
+        const formData = new FormData(this);
+        const nombre = formData.get('nombre');
+        const pin = formData.get('pin');
 
-        // Simple client-side check (can be enhanced)
-        let missing = false;
-        for (let pair of formData.entries()) {
-           if (!pair[1]) missing = true; // Check for empty values
+        // Basic client-side validation (complementing server-side)
+        if (!nombre || !pin) {
+            showAdminAlert('Nombre y PIN son requeridos.', 'warning');
+            return;
         }
-        if (missing) {
-             showAdminAlert('Por favor, completa todos los campos.', 'warning');
-             return;
-        }
-        // Specific PIN validation for employee form
-        if (form.id === 'add-employee-form' && !/^\d+$/.test(formData.get('pin'))) {
-             showAdminAlert('PIN debe ser numérico.', 'warning');
-             return;
+         if (!/^\d+$/.test(pin)) {
+            showAdminAlert('PIN debe ser numérico.', 'warning');
+            return;
         }
 
         try {
-            const response = await fetch(endpoint, {
+            const response = await fetch('/agregar-empleado', {
                 method: 'POST',
-                body: formData
+                body: formData // Send form data directly
             });
 
-            // Check if redirect indicates success OR if error message is returned
+            // Check if redirect indicates success (status 200 after redirect)
+            // Or handle potential error messages returned directly
             if (response.ok && response.redirected) {
-                // Success via redirect - parse message from URL (requires backend to send it)
-                const successParam = new URL(response.url).searchParams.get('success');
-                 showAdminAlert(successParam || successMessage, 'success');
-                 form.reset(); // Clear the form
-                 refreshFunction(); // Refresh list
-                 // Optionally, navigate to the relevant tab if needed
-                 const targetTab = form.closest('.tab-pane').id;
-                 if (targetTab) {
-                     const tabButton = document.querySelector(`button[data-bs-target="#${targetTab}"]`);
-                     if (tabButton) new bootstrap.Tab(tabButton).show();
-                 }
-            } else if (!response.ok) {
-                // Handle errors returned directly or via redirect parameters
-                 const errorParam = new URL(response.url).searchParams.get('error');
-                 if(errorParam){
-                    throw new Error(errorParam);
-                 } else {
-                    const errorText = await response.text(); // Try reading direct error text
-                    throw new Error(errorText || `Error ${response.status}`);
-                 }
+                 showAdminAlert(`Empleado '${nombre}' agregado correctamente.`, 'success');
+                 this.reset(); // Clear the form
+                 cargarEmpleados(); // Refresh list
+                 // Optionally switch tab: new bootstrap.Tab(document.getElementById('gestion-tab')).show();
             } else {
-                 // Handle non-redirect OK response if backend changes
-                 showAdminAlert(successMessage, 'success');
-                 form.reset();
-                 refreshFunction();
+                // Try to read error text from response if not redirected
+                const errorText = await response.text();
+                throw new Error(errorText || `Error ${response.status} al agregar empleado.`);
             }
         } catch (error) {
-             console.error("Error submitting form:", error);
-             showAdminAlert(`Error: ${error.message}`, 'danger');
+             console.error("Error adding employee:", error);
+             showAdminAlert(`Error al agregar empleado: ${error.message}`, 'danger');
         }
-    }
+    });
 
-    // --- Utility Function ---
-    function escapeHtml(unsafe) {
-       // ... (keep existing escapeHtml function)
+     // --- Utility Function ---
+     function escapeHtml(unsafe) {
         if (typeof unsafe !== 'string') return '';
         return unsafe
              .replace(/&/g, "&amp;")
@@ -359,68 +268,30 @@
              .replace(/'/g, "&#039;");
      }
 
-     // Function to handle tab switching based on URL hash
-     function handleUrlHash() {
-        const hash = window.location.hash;
-        if (hash) {
-            const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
-            if (tabButton) {
-                // Need to ensure Bootstrap's Tab is loaded
-                if (typeof bootstrap !== 'undefined' && bootstrap.Tab) {
-                    const tab = new bootstrap.Tab(tabButton);
-                    tab.show();
-                } else {
-                    console.warn("Bootstrap Tab component not ready for hash navigation.");
-                    // Fallback or retry logic might be needed
-                }
-            }
-        }
-     }
-
 
     // --- Initialization ---
     document.addEventListener('DOMContentLoaded', () => {
         // Initialize the modal instance
         deleteConfirmModal = new bootstrap.Modal(document.getElementById('deleteConfirmModal'));
 
-        // Attach the generic delete action trigger to the modal's confirm button
-        confirmDeleteBtn.addEventListener('click', () => {
-            if (typeof deleteAction === 'function') {
-                deleteAction();
-            }
-        });
+        // Attach the delete action to the modal's confirm button
+        document.getElementById('confirmDeleteBtn').addEventListener('click', performDelete);
 
-        // Attach form handlers
-        document.getElementById('add-employee-form').addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-        document.getElementById('add-project-form').addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos)); // New handler
-
-        // Initial data loads
+        // Initial data load
         cargarHistorial();
         cargarEmpleados();
-        cargarProyectos(); // New load call
 
-        // Handle success/error messages from redirects
+        // Check for success/error messages from redirects (e.g., after adding employee)
         const urlParams = new URLSearchParams(window.location.search);
         const successMsg = urlParams.get('success');
         const errorMsg = urlParams.get('error');
         if (successMsg) {
             showAdminAlert(successMsg, 'success');
-            // Clean the URL, keeping the hash
-            window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
+            // Clean the URL
+            window.history.replaceState({}, document.title, window.location.pathname);
         } else if (errorMsg) {
              showAdminAlert(errorMsg, 'danger');
-              window.history.replaceState({}, document.title, window.location.pathname + window.location.hash);
-        }
-
-        // Activate tab based on URL hash (e.g., after redirect)
-        handleUrlHash();
-        // Listen for hash changes if tabs are clicked manually
-        window.addEventListener('hashchange', handleUrlHash, false);
-
-        // Ensure tabs work correctly after initial load if hash exists
-        if (window.location.hash) {
-            // Small delay to ensure Bootstrap JS is fully ready
-            setTimeout(handleUrlHash, 100);
+              window.history.replaceState({}, document.title, window.location.pathname);
         }
     });
 
