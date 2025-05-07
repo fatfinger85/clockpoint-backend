@@ -81,6 +81,8 @@ def submit():
 
     zona = timezone("America/Chicago")
     timestamp = datetime.now(zona).strftime("%Y-%m-%d %H:%M:%S")
+    fecha = now.strftime("%Y-%m-%d")
+    hora = now.strftime("%H:%M:%S")
 
     try:
         empleados = supabase.table("empleados").select("id").eq("nombre", nombre).eq("pin", pin).execute().data
@@ -93,6 +95,8 @@ def submit():
             "nombre": nombre,
             "accion": accion,
             "timestamp": timestamp,
+            "fecha": fecha,
+            "hora": hora,
             "proyecto": proyecto_db # <-- Add project to the insert data
         }).execute()
 
