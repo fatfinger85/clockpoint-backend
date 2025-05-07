@@ -340,27 +340,33 @@ def exportar():
 
     try:
         # Select all columns, including the new 'proyecto' column
-        data = supabase.table("registros").select("*").order("timestamp", desc=True).execute().data
+        data = supabase.table("registros") \
+                       .select("nombre, accion, fecha, hora, proyecto") \
+                       .order("fecha", desc=True) \
+                       .order("hora", desc=True) \
+                       .execute().data
         if not data:
             return "No hay registros para exportar.", 200
 
         # Add 'proyecto' to header
-        csv_lines = ["nombre,accion,timestamp,proyecto"]
+        csv_lines = ["nombre,accion,fecha,hora,proyecto"]
         for row in data:
             # Prepare data, handling potential None values and escaping quotes
             nombre = row.get('nombre', '') or ''
             accion = row.get('accion', '') or ''
-            timestamp = row.get('timestamp', '') or ''
+            fecha = row.get('fecha', '') or ''
+            hora = row.get('hora', '') or ''
             proyecto = row.get('proyecto', '') or '' # Handle None/empty project
 
             # Escape double quotes
             nombre_escaped = nombre.replace('"', '""')
             accion_escaped = accion.replace('"', '""')
-            timestamp_escaped = timestamp.replace('"', '""')
+            fecha_escaped = fecha.replace('"', '""')
+            hora_escaped = hora.replace('"', '""')
             proyecto_escaped = proyecto.replace('"', '""') # Escape project name
 
             # Add project to the CSV line
-            csv_lines.append(f'"{nombre_escaped}","{accion_escaped}","{timestamp_escaped}","{proyecto_escaped}"')
+            csv_lines.append(f'"{nombre_escaped}","{accion_escaped}","{fecha_escaped}","{hora_escaped}","{proyecto_escaped}"')
 
         csv_output = "\n".join(csv_lines) + "\n"
 
