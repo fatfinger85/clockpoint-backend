@@ -80,7 +80,8 @@ def submit():
         proyecto_db = proyecto
 
     zona = timezone("America/Chicago")
-    timestamp = datetime.now(zona).strftime("%Y-%m-%d %H:%M:%S")
+    now = datetime.now(zona)
+    timestamp = now.strftime("%Y-%m-%d %H:%M:%S")
     fecha = now.strftime("%Y-%m-%d")
     hora = now.strftime("%H:%M:%S")
 
