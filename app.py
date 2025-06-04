@@ -3,7 +3,7 @@
 from flask import Flask, request, jsonify, redirect, render_template, session, send_file
 from flask_cors import CORS
 from supabase import create_client, Client
-from datetime import datetime
+from datetime import datetime, timedelta
 from pytz import timezone
 from collections import defaultdict  # <-- Añadido para totales
 import pandas as pd
@@ -437,9 +437,6 @@ def exportar():
 
 # -- NUEVOS ENDPOINTS PARA HORAS TOTALES --
 
-from datetime import datetime
-from collections import defaultdict
-
 @app.route("/horas-totales/<nombre_usuario>", methods=["GET"])
 def horas_totales_usuario(nombre_usuario):
     if not session.get("admin"):
@@ -562,6 +559,91 @@ def horas_totales_todos():
         logging.error(f"Error en /horas-totales: {e}", exc_info=True)
         return jsonify({"status": "error", "message": "Error interno al calcular totales"}), 500
 
+@app.route("/horas-totales-semanal", methods=["GET"])
+def horas_totales_semanal():
+    if not session.get("admin"):
+        return jsonify({"status": "error", "message": "No autorizado"}), 403
+    if not supabase:
+        return jsonify({"status": "error", "message": "DB no configurada"}), 500
+
+    try:
+        # 1) Traer todos los registros ordenados por timestamp ascendente
+        registros = (
+            supabase.table("registros")
+            .select("nombre, accion, timestamp")
+            .order("timestamp", desc=False)
+            .execute()
+            .data
+        )
+        if not isinstance(registros, list):
+            logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
+            return jsonify({"status": "error", "message": "Formato inesperado de datos"}), 500
+
+        # 2) Acumular segundos trabajados por (usuario, año-semana)
+        total_por_usuario_semana = defaultdict(float)
+        pendiente_entrada = {}  # { nombre_usuario: datetime de clock-in pendiente }
+
+        for idx, row in enumerate(registros):
+            nombre = row.get("nombre")
+            accion = (row.get("accion") or "").strip().lower()
+            ts = row.get("timestamp")
+
+            if not ts:
+                logging.warning(f"Registro #{idx} sin timestamp: {row!r}")
+                continue
+
+            # Parsear timestamp (formato "YYYY-MM-DD HH:MM:SS")
+            try:
+                dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except Exception as parse_err:
+                logging.warning(f"Registro #{idx} timestamp inválido '{ts}': {parse_err}. Fila: {row!r}")
+                continue
+
+            if accion == "clock in":
+                # Si no hay ya uno pendiente, guardamos este datetime de entrada
+                if pendiente_entrada.get(nombre) is None:
+                    pendiente_entrada[nombre] = dt
+            elif accion == "clock out":
+                inicio = pendiente_entrada.get(nombre)
+                if inicio is not None:
+                    # Diferencia en segundos
+                    delta_seg = (dt - inicio).total_seconds()
+                    # Obtener año y número de semana ISO
+                    iso_year, iso_week, _ = inicio.isocalendar()
+                    # Acumular al par (usuario, año, semana)
+                    key = (nombre, iso_year, iso_week)
+                    total_por_usuario_semana[key] += delta_seg
+                    # Reset entrante pendiente
+                    pendiente_entrada[nombre] = None
+
+        # 3) Convertir segundos a horas y armar lista de resultados
+        resultados = []
+        for (nombre, year, week), segs in total_por_usuario_semana.items():
+            horas = round(segs / 3600, 2)
+            # --- Cálculo del rango “Jun 2–8, 2025” ---
+            lunes = datetime.fromisocalendar(year, week, 1)
+            domingo = lunes + timedelta(days=6)
+            mes_abrev = lunes.strftime("%b")      # ej. "Jun"
+            dia_inicio = lunes.day                # ej. 2
+            dia_fin = domingo.day                 # ej. 8
+            anio = lunes.year                     # ej. 2025
+
+            semana_str = f"Semana {week} ({mes_abrev} {dia_inicio}–{dia_fin}, {anio})"
+
+            resultados.append({
+                "nombre": nombre,
+                "semana": semana_str,
+                "horas_trabajadas": horas
+            })
+
+        # Ordenamos por semana asc y luego por nombre (opcional)
+        resultados.sort(key=lambda x: (x["semana"], x["nombre"]))
+
+        return jsonify({"status": "success", "totales_semanal": resultados})
+
+    except Exception as e:
+        logging.error(f"Error en /horas-totales-semanal: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": "Error interno al calcular totales semanal"}), 500
 
 
 # Health check endpoint (optional but good practice)
