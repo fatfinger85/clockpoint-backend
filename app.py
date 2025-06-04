@@ -343,7 +343,6 @@ def estado():
         logging.error(f"Error fetching status for user {nombre}: {str(e)}")
         return jsonify({"estado": "error_interno"}), 500
 
-
 @app.route("/exportar")
 def exportar():
     if not session.get("admin"):
@@ -352,7 +351,7 @@ def exportar():
         return "Backend database not configured.", 500
 
     try:
-        # 1) Leer todos los registros desde Supabase
+        # 1) Leer todos los registros (nombre, acción, timestamp, proyecto)
         registros = (
             supabase.table("registros")
             .select("nombre, accion, timestamp, proyecto")
@@ -364,35 +363,28 @@ def exportar():
             logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
             return "Error al generar archivo: formato inesperado de datos.", 500
 
-        # 2) Convertir la lista de dicts a DataFrame de pandas
+        # 2) Construir DataFrame básico y extraer fecha/hora
         df = pd.DataFrame(registros)
-
-        # Asegurarnos de que exista la columna 'timestamp'
         if "timestamp" not in df.columns:
             return "Error: la columna 'timestamp' no existe en la tabla registros.", 500
 
-        # Convertir timestamp a datetime y extraer fecha/hora
-        df["timestamp"] = pd.to_datetime(df["timestamp"], format="%Y-%m-%d %H:%M:%S", errors="coerce")
-        df["fecha"] = df["timestamp"].dt.strftime("%Y-%m-%d")
-        df["hora"]  = df["timestamp"].dt.strftime("%H:%M:%S")
+        # Convertir timestamp a datetime y partir en fecha/hora
+        df["timestamp"] = pd.to_datetime(
+            df["timestamp"], format="%Y-%m-%d %H:%M:%S", errors="coerce"
+        )
+        df["fecha"] = df["timestamp"].dt.strftime("%Y-%m-%d").fillna("")
+        df["hora"]  = df["timestamp"].dt.strftime("%H:%M:%S").fillna("")
 
-        # Rellenar valores faltantes si hubiera timestamp inválido
-        df["fecha"] = df["fecha"].fillna("")
-        df["hora"]  = df["hora"].fillna("")
-
-        # 3) Calcular totales de horas trabajadas por empleado
+        # 3) Calcular Totales Globales (por usuario)
         total_por_usuario = defaultdict(float)
-        pendiente_entrada = {}  # { nombre: datetime de última entrada pendiente }
-
-        # Iterar por cada fila ordenada por timestamp ascendente
+        pendiente_entrada = {}
+        # Recorrer en orden cronológico
         for _, row in df.iterrows():
             nombre = row["nombre"]
             accion = (row["accion"] or "").strip().lower()
-            ts     = row["timestamp"]
+            ts = row["timestamp"]
             if pd.isna(ts):
-                # timestamp inválido o faltante: lo ignoramos
                 continue
-
             if accion == "clock in":
                 if pendiente_entrada.get(nombre) is None:
                     pendiente_entrada[nombre] = ts
@@ -402,26 +394,70 @@ def exportar():
                     total_por_usuario[nombre] += (ts - inicio).total_seconds()
                     pendiente_entrada[nombre] = None
 
-        # Convertir segundos a horas con 2 decimales
+        # DataFrame de totales globales
         totales_list = []
         for nombre, segs in total_por_usuario.items():
             horas = round(segs / 3600, 2)
             totales_list.append({"nombre": nombre, "horas_trabajadas": horas})
         df_totales = pd.DataFrame(totales_list)
 
-        # 4) Preparar un Excel en memoria con dos hojas
+        # 4) Calcular Totales Semanales (por usuario + semana ISO)
+        total_por_usuario_semana = defaultdict(float)
+        pendiente_sem = {}
+        for _, row in df.iterrows():
+            nombre = row["nombre"]
+            accion = (row["accion"] or "").strip().lower()
+            ts = row["timestamp"]
+            if pd.isna(ts):
+                continue
+
+            if accion == "clock in":
+                if pendiente_sem.get(nombre) is None:
+                    pendiente_sem[nombre] = ts
+            elif accion == "clock out":
+                inicio = pendiente_sem.get(nombre)
+                if inicio is not None:
+                    delta_seg = (ts - inicio).total_seconds()
+                    iso_year, iso_week, _ = inicio.isocalendar()
+                    key = (nombre, iso_year, iso_week)
+                    total_por_usuario_semana[key] += delta_seg
+                    pendiente_sem[nombre] = None
+
+        totales_semana_list = []
+        for (nombre, year, week), segs in total_por_usuario_semana.items():
+            horas = round(segs / 3600, 2)
+            # Calcular rango de fechas de esa semana ISO
+            lunes = datetime.fromisocalendar(year, week, 1)
+            domingo = lunes + timedelta(days=6)
+            mes_abrev = lunes.strftime("%b")     # p.ej. “Jun”
+            dia_inicio = lunes.day               # p.ej. 2
+            dia_fin = domingo.day                # p.ej. 8
+            anio = lunes.year                    # p.ej. 2025
+            semana_str = f"Semana {week} ({mes_abrev} {dia_inicio}–{dia_fin}, {anio})"
+            totales_semana_list.append({
+                "nombre": nombre,
+                "semana": semana_str,
+                "horas_trabajadas": horas
+            })
+
+        df_totales_semanal = pd.DataFrame(totales_semana_list)
+
+        # 5) Preparar el Excel con tres hojas en memoria
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            # Hoja “Registros”: todas las columnas que queremos mostrar
+            # Hoja “Registros”
             df_reg = df[["nombre", "accion", "fecha", "hora", "proyecto"]].copy()
             df_reg.to_excel(writer, sheet_name="Registros", index=False)
 
-            # Hoja “Totales”: nombre + horas_trabajadas
+            # Hoja “Totales Globales”
             df_totales.to_excel(writer, sheet_name="Totales", index=False)
+
+            # Hoja “Totales Semanales”
+            df_totales_semanal.to_excel(writer, sheet_name="Totales Semanales", index=False)
 
         output.seek(0)
 
-        # 5) Devolver el archivo .xlsx como descarga
+        # 6) Devolver como descarga un .xlsx
         filename = f"registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         return send_file(
             output,
@@ -433,6 +469,7 @@ def exportar():
     except Exception as e:
         logging.error(f"Error exporting Excel: {e}", exc_info=True)
         return "Error al generar el archivo Excel.", 500
+
 
 
 # -- NUEVOS ENDPOINTS PARA HORAS TOTALES --
