@@ -4,36 +4,110 @@
 <head>
   <meta charset="UTF-8">
   <title>ClockPoint - Login Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <!-- Bootstrap CSS -->
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Google Fonts: Inter -->
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap" rel="stylesheet">
+
   <style>
     body {
-      background-color: #f0f2f5;
+      background: linear-gradient(135deg, #536dfe 0%, #43a047 100%);
+      font-family: 'Inter', sans-serif;
+      min-height: 100vh;
+      margin: 0;
     }
     .login-container {
       max-width: 400px;
-      margin: 80px auto;
+      width: 100%;
       padding: 30px;
-      border-radius: 12px;
-      background: white;
-      box-shadow: 0 0.5rem 1rem rgba(0,0,0,0.1);
+      border-radius: 1rem;
+      background: rgba(255, 255, 255, 0.9);
+      box-shadow: 0 1rem 2rem rgba(0, 0, 0, 0.08);
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.5s ease-out, transform 0.5s ease-out;
+    }
+    .login-container.show {
+      opacity: 1;
+      transform: translateY(0);
     }
     .form-control {
       border-radius: 0.5rem;
     }
+    .btn-gradient {
+      background: linear-gradient(90deg, #536dfe 0%, #43a047 100%);
+      border: none;
+      color: #fff;
+      font-weight: 600;
+      transition: background 0.3s ease;
+      border-radius: 0.5rem;
+      padding: 0.75rem 1rem;
+    }
+    .btn-gradient:hover {
+      background: linear-gradient(90deg, #3d5afe 0%, #388e3c 100%);
+    }
+    .logo {
+      display: block;
+      width: 60px;
+      margin: 0 auto 10px auto;
+    }
+    .text-forgot {
+      font-size: 0.9rem;
+    }
+    @media (max-width: 576px) {
+      .login-container {
+        margin: 0 1rem;
+      }
+    }
   </style>
 </head>
 <body>
-  <div class="container">
+  <div class="d-flex justify-content-center align-items-center vh-100">
     <div class="login-container">
-      <h3 class="text-center text-primary mb-4">🔐 Login Administrador</h3>
-      <form method="POST">
-        <div class="mb-3">
-          <label for="password" class="form-label">Contraseña</label>
-          <input type="password" class="form-control" name="password" id="password" placeholder="********" required>
+      <!-- Logo encima del título -->
+      <img src="/static/logo.png" alt="ClockPoint Logo" class="logo">
+      <h3 class="text-center text-primary mb-4">Login Administrador</h3>
+      <form method="POST" novalidate>
+        <!-- Floating label para contraseña -->
+        <div class="form-floating mb-3">
+          <input
+            type="password"
+            class="form-control"
+            id="password"
+            name="password"
+            placeholder="Contraseña"
+            required
+          >
+          <label for="password">Contraseña</label>
+          <div class="invalid-feedback">
+            Por favor ingresa tu contraseña.
+          </div>
         </div>
-        <button type="submit" class="btn btn-primary w-100">Ingresar</button>
+        <!-- Botón con degradado -->
+        <button type="submit" class="btn btn-gradient w-100">Ingresar</button>
       </form>
     </div>
   </div>
+
+  <!-- Bootstrap JS Bundle -->
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
+  <!-- Animación de entrada -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      document.querySelector('.login-container').classList.add('show');
+      // Habilitar validación de Bootstrap
+      const forms = document.querySelectorAll('.needs-validation');
+      Array.prototype.slice.call(forms).forEach(form => {
+        form.addEventListener('submit', event => {
+          if (!form.checkValidity()) {
+            event.preventDefault();
+            event.stopPropagation();
+          }
+          form.classList.add('was-validated');
+        }, false);
+      });
+    });
+  </script>
 </body>
 </html>
