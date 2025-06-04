@@ -68,7 +68,7 @@
       padding: 2rem;
     }
 
-    /* === TABS PERSONALIZADOS === */
+    /* === TABS PRINCIPALES === */
     .nav-tabs {
       border-bottom: 1px solid #dee2e6;
       margin-bottom: 1.5rem;
@@ -93,9 +93,17 @@
       border-color: #0d6efd #0d6efd #ffffff;
       border-bottom: 1px solid #0d6efd;
     }
-    .nav-tabs .nav-link .bi {
-      margin-right: 0.4rem;
-      vertical-align: text-bottom;
+
+    /* === TABS SECUNDARIOS DENTRO DE HISTORIAL === */
+    .nav-pills .nav-link {
+      border-radius: 0.5rem;
+      margin-right: 0.5rem;
+      padding: 0.5rem 1rem;
+      font-weight: 500;
+    }
+    .nav-pills .nav-link.active {
+      background-color: #0d6efd !important;
+      color: #fff !important;
     }
 
     /* === TABPANE PADDING === */
@@ -105,7 +113,7 @@
       margin-bottom: 1rem;
     }
 
-    /* === TABLA HISTORIAL & TOTALES === */
+    /* === TABLA ESTILOS === */
     .table-custom {
       border: 1px solid #dee2e6;
       border-radius: 0.5rem;
@@ -130,11 +138,6 @@
       border-radius: 0.5rem;
       overflow: hidden;
       margin-bottom: 2rem;
-    }
-
-    /* === SECCIÓN TOTALES === */
-    #tablaTotales .table-custom {
-      margin-top: 1rem;
     }
 
     /* === FORMULARIOS === */
@@ -210,7 +213,7 @@
         <!-- === ESPACIO PARA ALERTAS === -->
         <div id="admin-alert-placeholder"></div>
 
-        <!-- === BARRA DE TABS === -->
+        <!-- === BARRA DE TABS PRINCIPALES === -->
         <ul class="nav nav-tabs" id="adminTabs" role="tablist">
           <li class="nav-item" role="presentation">
             <button
@@ -271,7 +274,7 @@
           </li>
         </ul>
 
-        <!-- === CONTENIDO DE CADA TAB === -->
+        <!-- === CONTENIDO DE CADA TAB PRINCIPAL === -->
         <div class="tab-content pt-3" id="adminTabsContent">
 
           <!-- ======= PESTAÑA: HISTORIAL ======= -->
@@ -281,27 +284,84 @@
             role="tabpanel"
             aria-labelledby="historial-tab"
           >
-            <h4>Historial de Registros</h4>
-            <div class="table-responsive" id="tablaHistorial">
-              <div class="loading-indicator">
-                <span
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-                Cargando historial...
-              </div>
-            </div>
+            <!-- Sub-tabs para “Por Fecha” y “Por Semana” -->
+            <ul class="nav nav-pills mb-3" id="historialSubTabs" role="tablist">
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link active"
+                  id="por-fecha-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#por-fecha"
+                  type="button"
+                  role="tab"
+                >
+                  Por Fecha
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="por-semana-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#por-semana"
+                  type="button"
+                  role="tab"
+                >
+                  Por Semana
+                </button>
+              </li>
+            </ul>
 
-            <h4 class="mt-4">Total de Horas Trabajadas</h4>
-            <div class="table-responsive" id="tablaTotales">
-              <div class="loading-indicator">
-                <span
-                  class="spinner-border spinner-border-sm"
-                  role="status"
-                  aria-hidden="true"
-                ></span>
-                Cargando totales...
+            <div class="tab-content" id="historialSubTabsContent">
+              <!-- ====== Historico “Por Fecha” ====== -->
+              <div
+                class="tab-pane fade show active"
+                id="por-fecha"
+                role="tabpanel"
+                aria-labelledby="por-fecha-tab"
+              >
+                <h4>Historial de Registros</h4>
+                <div class="table-responsive" id="tablaHistorial">
+                  <div class="loading-indicator">
+                    <span
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Cargando historial...
+                  </div>
+                </div>
+                <h4 class="mt-4">Total de Horas Trabajadas (Global)</h4>
+                <div class="table-responsive" id="tablaTotales">
+                  <div class="loading-indicator">
+                    <span
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Cargando totales...
+                  </div>
+                </div>
+              </div>
+
+              <!-- ====== Totales “Por Semana” ====== -->
+              <div
+                class="tab-pane fade"
+                id="por-semana"
+                role="tabpanel"
+                aria-labelledby="por-semana-tab"
+              >
+                <h4>Totales de Horas por Semana</h4>
+                <div class="table-responsive" id="tablaTotalesSemanal">
+                  <div class="loading-indicator">
+                    <span
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Cargando totales semanales...
+                  </div>
+                </div>
               </div>
             </div>
           </div>
@@ -490,6 +550,7 @@
     const tablaTotales = document.getElementById("tablaTotales");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
     const tablaProyectos = document.getElementById("tablaProyectos");
+    const tablaTotalesSemanal = document.getElementById("tablaTotalesSemanal");
     const adminAlertPlaceholder = document.getElementById(
       "admin-alert-placeholder"
     );
@@ -525,7 +586,7 @@
       adminAlertPlaceholder.innerHTML = "";
     }
 
-    // === CARGAR HISTORIAL ===
+    // === CARGAR HISTORIAL (Por Fecha) ===
     async function cargarHistorial() {
       tablaHistorial.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
@@ -568,7 +629,7 @@
       }
     }
 
-    // === CARGAR TOTALES DE HORAS ===
+    // === CARGAR TOTALES (Global) ===
     async function cargarTotales() {
       tablaTotales.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...</div>';
@@ -603,6 +664,49 @@
       } catch (error) {
         console.error("Error loading totals:", error);
         tablaTotales.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar totales: ${escapeHtml(
+          error.message
+        )}</div>`;
+      }
+    }
+
+    // === CARGAR TOTALES SEMANALES ===
+    async function cargarTotalesSemanal() {
+      tablaTotalesSemanal.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales semanales...</div>';
+      try {
+        const res = await fetch("/horas-totales-semanal");
+        if (!res.ok)
+          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.status !== "success") {
+          throw new Error(data.message || "Error en formato de respuesta.");
+        }
+        const semanales = data.totales_semanal;
+        if (!Array.isArray(semanales) || semanales.length === 0) {
+          tablaTotalesSemanal.innerHTML =
+            '<p class="text-muted text-center p-3">No hay datos de totales semanales.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Semana</th><th>Nombre</th><th>Horas Trabajadas</th></tr></thead><tbody>";
+        semanales.forEach((item) => {
+          const semana = item.semana || "";
+          const nombre = item.nombre || "";
+          const horas =
+            item.horas_trabajadas !== undefined
+              ? item.horas_trabajadas
+              : "";
+          html += `<tr>
+                        <td>${escapeHtml(semana)}</td>
+                        <td>${escapeHtml(nombre)}</td>
+                        <td>${escapeHtml(horas.toString())}</td>
+                     </tr>`;
+        });
+        html += "</tbody></table>";
+        tablaTotalesSemanal.innerHTML = html;
+      } catch (error) {
+        console.error("Error loading weekly totals:", error);
+        tablaTotalesSemanal.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar totales semanales: ${escapeHtml(
           error.message
         )}</div>`;
       }
@@ -880,6 +984,7 @@
       // Cargar datos iniciales
       cargarHistorial();
       cargarTotales();
+      cargarTotalesSemanal();
       cargarEmpleados();
       cargarProyectos();
 
