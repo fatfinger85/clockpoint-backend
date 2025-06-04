@@ -2,529 +2,903 @@
 <!DOCTYPE html>
 <html lang="es">
 <head>
-    <meta charset="UTF-8">
-    <title>ClockPoint - Panel Admin</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet">
-    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
-    <style>
-        /* General body styling */
-        body {
-            background-color: #f8f9fa; /* Light background */
-            padding-top: 2rem;
-            padding-bottom: 2rem;
-        }
-        /* Main content card styling */
-        .main-card {
-            border-radius: 0.75rem; /* Slightly softer corners */
-            box-shadow: 0 0.5rem 1.5rem rgba(0,0,0,0.07); /* Softer shadow */
-            border: none; /* Remove default card border */
-            overflow: hidden; /* Ensure child elements respect border-radius */
-        }
-        /* Card header styling */
-        .main-card .card-header {
-             background-color: #e9ecef; /* Light header background */
-             border-bottom: 1px solid #dee2e6;
-             padding-top: 1.25rem;
-             padding-bottom: 1.25rem;
-        }
-        /* Card body styling */
-         .main-card .card-body {
-             padding: 2rem; /* More padding inside card body */
-        }
-        /* Tab navigation styling */
-        .nav-tabs {
-            border-bottom: 1px solid #dee2e6;
-            margin-bottom: 1.5rem; /* Space below tabs */
-        }
-        /* Individual tab link styling */
-        .nav-tabs .nav-link {
-            color: #495057; /* Darker inactive tab text */
-            border: 1px solid transparent;
-            border-top-left-radius: 0.375rem;
-            border-top-right-radius: 0.375rem;
-            padding: 0.75rem 1rem; /* Adjust tab padding */
-            font-weight: 500;
-            transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out; /* Smooth transition */
-        }
-        /* Tab link hover state */
-        .nav-tabs .nav-link:hover {
-            border-color: #e9ecef #e9ecef #dee2e6;
-            background-color: #e9ecef; /* Subtle hover */
-            color: #0d6efd;
-        }
-        /* Active tab link styling */
-        .nav-tabs .nav-link.active {
-            color: #fff; /* White text for active tab */
-            background-color: #0d6efd; /* Primary color background */
-            border-color: #0d6efd #0d6efd #fff; /* Match border */
-            border-bottom: 1px solid #0d6efd; /* Ensure bottom border matches bg */
-        }
-        /* Styling for icons within tab links */
-        .nav-tabs .nav-link .bi {
-            margin-right: 0.4rem;
-            vertical-align: text-bottom; /* Align icon nicely with text */
-        }
-        /* Table general styling */
-        .table {
-            margin-bottom: 0; /* Remove default margin */
-            border: 1px solid #dee2e6; /* Add subtle border */
-            border-radius: 0.375rem; /* Rounded corners for table */
-            overflow: hidden; /* Ensure border-radius is applied */
-        }
-        /* Table header styling */
-        .table thead th {
-            background-color: #f8f9fa; /* Lighter table header */
-            border-bottom-width: 1px; /* Thinner bottom border */
-            font-weight: 600;
-            color: #495057;
-            white-space: nowrap; /* Prevent header text wrapping */
-        }
-        /* Table row hover effect */
-        .table-hover tbody tr:hover {
-            background-color: rgba(13, 110, 253, 0.05); /* Subtle blue hover */
-        }
-        /* Form section container styling */
-        .form-section {
-            background-color: #fff; /* White background for forms */
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            border: 1px solid #e9ecef;
-            margin-bottom: 1.5rem; /* Space below form sections */
-        }
-        /* Alert message placeholder styling */
-        #admin-alert-placeholder {
-            min-height: 50px; /* Prevent layout shift when empty */
-            margin-bottom: 1rem; /* Space below alerts */
-        }
-        /* Styling for buttons within tables */
-        .table button {
-            margin-left: 5px; /* Spacing for buttons in tables */
-        }
-        /* Styling for loading indicators */
-        .loading-indicator {
-             display: flex;
-             justify-content: center;
-             align-items: center;
-             padding: 1.5rem;
-             color: #6c757d; /* Muted text color */
-        }
-        .loading-indicator .spinner-border {
-             margin-right: 0.5rem;
-        }
-        /* Responsive adjustments for smaller screens */
-        @media (max-width: 576px) {
-            .main-card .card-body { padding: 1.5rem; }
-            .nav-tabs .nav-link { font-size: 0.85rem; padding: 0.6rem 0.8rem; }
-            .form-section { padding: 1rem; }
-            /* Stack form buttons below inputs on small screens */
-            #add-project-form .col-md-2, #add-employee-form .col-md-2 {
-                margin-top: 0.5rem;
-            }
-        }
-    </style>
+  <meta charset="UTF-8" />
+  <title>ClockPoint - Panel Admin</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+  <!-- Bootstrap CSS -->
+  <link
+    href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+    rel="stylesheet"
+  />
+  <!-- Bootstrap Icons -->
+  <link
+    rel="stylesheet"
+    href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css"
+  />
+  <!-- Google Fonts: Inter -->
+  <link
+    href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap"
+    rel="stylesheet"
+  />
+
+  <style>
+    /* === TIPOGRAFÍA Y FONDO GLOBAL === */
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, #536dfe 0%, #43a047 100%);
+      min-height: 100vh;
+      margin: 0;
+      padding: 2rem 0;
+    }
+
+    /* === CONTAINER PRINCIPAL === */
+    .container-admin {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      opacity: 0;
+      transform: translateY(20px);
+      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
+    }
+    .container-admin.show {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* === TARJETA PRINCIPAL === */
+    .main-card {
+      background-color: #ffffff;
+      border-radius: 1rem;
+      box-shadow: 0 0.5rem 1.5rem rgba(0, 0, 0, 0.07);
+      overflow: hidden;
+      border: none;
+    }
+    .main-card .card-header {
+      background-color: #f1f3f5;
+      border-bottom: 1px solid #dee2e6;
+      padding: 1.5rem 2rem;
+    }
+    .main-card .card-header h2 {
+      margin: 0;
+      font-weight: 600;
+      color: #343a40;
+    }
+    .main-card .card-body {
+      padding: 2rem;
+    }
+
+    /* === TABS PERSONALIZADOS === */
+    .nav-tabs {
+      border-bottom: 1px solid #dee2e6;
+      margin-bottom: 1.5rem;
+    }
+    .nav-tabs .nav-link {
+      color: #495057;
+      border: 1px solid transparent;
+      border-top-left-radius: 0.5rem;
+      border-top-right-radius: 0.5rem;
+      padding: 0.75rem 1.25rem;
+      font-weight: 500;
+      transition: background-color 0.2s ease, color 0.2s ease;
+    }
+    .nav-tabs .nav-link:hover {
+      background-color: #e9ecef;
+      border-color: #e9ecef #e9ecef #dee2e6;
+      color: #0d6efd;
+    }
+    .nav-tabs .nav-link.active {
+      color: #ffffff;
+      background-color: #0d6efd;
+      border-color: #0d6efd #0d6efd #ffffff;
+      border-bottom: 1px solid #0d6efd;
+    }
+    .nav-tabs .nav-link .bi {
+      margin-right: 0.4rem;
+      vertical-align: text-bottom;
+    }
+
+    /* === TABPANE PADDING === */
+    .tab-pane h4 {
+      color: #343a40;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+
+    /* === TABLA HISTORIAL & TOTALES === */
+    .table-custom {
+      border: 1px solid #dee2e6;
+      border-radius: 0.5rem;
+      overflow: hidden;
+    }
+    .table-custom thead th {
+      background-color: #f8f9fa;
+      font-weight: 600;
+      color: #495057;
+      border-bottom: 1px solid #dee2e6;
+      white-space: nowrap;
+      padding: 0.75rem 1rem;
+    }
+    .table-custom tbody td {
+      padding: 0.75rem 1rem;
+      vertical-align: middle;
+    }
+    .table-custom tbody tr:hover {
+      background-color: rgba(13, 110, 253, 0.05);
+    }
+    .table-responsive {
+      border-radius: 0.5rem;
+      overflow: hidden;
+      margin-bottom: 2rem;
+    }
+
+    /* === SECCIÓN TOTALES === */
+    #tablaTotales .table-custom {
+      margin-top: 1rem;
+    }
+
+    /* === FORMULARIOS === */
+    .form-section {
+      background-color: #ffffff;
+      padding: 2rem;
+      border-radius: 0.75rem;
+      border: 1px solid #e9ecef;
+      margin-bottom: 2rem;
+    }
+    .form-section h5 {
+      font-weight: 600;
+      margin-bottom: 1rem;
+      color: #343a40;
+    }
+    .form-section .form-label {
+      font-weight: 500;
+      color: #495057;
+    }
+    .needs-validation .form-control {
+      border-radius: 0.5rem;
+    }
+    .needs-validation .btn-primary {
+      border-radius: 0.5rem;
+      padding: 0.6rem 1rem;
+      font-weight: 500;
+    }
+    .needs-validation .btn-primary:hover {
+      background-color: #0056b3;
+    }
+
+    /* === ALERTAS === */
+    #admin-alert-placeholder {
+      min-height: 60px;
+      margin-bottom: 1.5rem;
+    }
+
+    /* === INDICADORES DE CARGA === */
+    .loading-indicator {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      color: #6c757d;
+      padding: 2rem 0;
+    }
+    .loading-indicator .spinner-border {
+      margin-right: 0.5rem;
+    }
+
+    /* === RESPONSIVE === */
+    @media (max-width: 768px) {
+      .main-card .card-body {
+        padding: 1.5rem;
+      }
+      .nav-tabs .nav-link {
+        padding: 0.5rem 1rem;
+        font-size: 0.9rem;
+      }
+      .form-section {
+        padding: 1.25rem;
+      }
+    }
+  </style>
 </head>
 <body>
-  <div class="container py-4"> <div class="card main-card">
+  <div class="container-admin">
+    <div class="card main-card">
       <div class="card-header text-center">
-         <h2 class="mb-0 text-primary">Panel de Administración</h2>
+        <h2>Panel de Administración</h2>
       </div>
       <div class="card-body">
 
-          <div id="admin-alert-placeholder"></div>
+        <!-- === ESPACIO PARA ALERTAS === -->
+        <div id="admin-alert-placeholder"></div>
 
-          <ul class="nav nav-tabs" id="adminTabs" role="tablist">
-            <li class="nav-item" role="presentation">
-              <button class="nav-link active" id="historial-tab" data-bs-toggle="tab" data-bs-target="#historial" type="button" role="tab"><i class="bi bi-clock-history"></i> Historial</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="empleados-tab" data-bs-toggle="tab" data-bs-target="#empleados" type="button" role="tab"><i class="bi bi-person-plus-fill"></i> Agregar Empleado</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="gestion-tab" data-bs-toggle="tab" data-bs-target="#gestion" type="button" role="tab"><i class="bi bi-people-fill"></i> Gestionar Empleados</button>
-            </li>
-            <li class="nav-item" role="presentation">
-              <button class="nav-link" id="proyectos-tab" data-bs-toggle="tab" data-bs-target="#proyectos" type="button" role="tab"><i class="bi bi-folder-fill"></i> Proyectos</button>
-            </li>
-            <li class="nav-item ms-auto">
-              <a class="nav-link text-success" href="/exportar" target="_blank"><i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar CSV</a>
-            </li>
-          </ul>
+        <!-- === BARRA DE TABS === -->
+        <ul class="nav nav-tabs" id="adminTabs" role="tablist">
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link active"
+              id="historial-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#historial"
+              type="button"
+              role="tab"
+            >
+              <i class="bi bi-clock-history"></i> Historial
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="empleados-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#empleados"
+              type="button"
+              role="tab"
+            >
+              <i class="bi bi-person-plus-fill"></i> Agregar Empleado
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="gestion-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#gestion"
+              type="button"
+              role="tab"
+            >
+              <i class="bi bi-people-fill"></i> Gestionar Empleados
+            </button>
+          </li>
+          <li class="nav-item" role="presentation">
+            <button
+              class="nav-link"
+              id="proyectos-tab"
+              data-bs-toggle="tab"
+              data-bs-target="#proyectos"
+              type="button"
+              role="tab"
+            >
+              <i class="bi bi-folder-fill"></i> Proyectos
+            </button>
+          </li>
+          <li class="nav-item ms-auto">
+            <a
+              class="nav-link text-success"
+              href="/exportar"
+              target="_blank"
+            >
+              <i class="bi bi-file-earmark-spreadsheet-fill"></i> Exportar Reporte
+            </a>
+          </li>
+        </ul>
 
-          <div class="tab-content pt-3" id="adminTabsContent"> <div class="tab-pane fade show active" id="historial" role="tabpanel" aria-labelledby="historial-tab">
-               <h4 class="mb-3">Historial de Registros</h4>
-               <div class="table-responsive" id="tablaHistorial">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...
-                   </div>
-               </div>
-            </div>
+        <!-- === CONTENIDO DE CADA TAB === -->
+        <div class="tab-content pt-3" id="adminTabsContent">
 
-            <div class="tab-pane fade" id="empleados" role="tabpanel" aria-labelledby="empleados-tab">
-              <div class="form-section">
-                 <h5 class="mb-3">Agregar Nuevo Empleado</h5>
-                 <form id="add-employee-form" action="/agregar-empleado" method="POST" class="row g-3 needs-validation" novalidate>
-                    <div class="col-md-5">
-                      <label for="add-emp-nombre" class="form-label">Nombre Empleado</label>
-                      <input type="text" id="add-emp-nombre" name="nombre" placeholder="Nombre completo" required class="form-control">
-                      <div class="invalid-feedback">Por favor ingresa un nombre.</div>
-                    </div>
-                    <div class="col-md-5">
-                      <label for="add-emp-pin" class="form-label">PIN</label>
-                      <input type="text" id="add-emp-pin" name="pin" pattern="\d+" title="PIN debe ser numérico" placeholder="PIN (solo números)" required class="form-control">
-                      <div class="invalid-feedback">Por favor ingresa un PIN numérico.</div>
-                    </div>
-                    <div class="col-md-2 d-flex align-items-end">
-                      <button type="submit" class="btn btn-primary w-100">Agregar</button>
-                    </div>
-                 </form>
+          <!-- ======= PESTAÑA: HISTORIAL ======= -->
+          <div
+            class="tab-pane fade show active"
+            id="historial"
+            role="tabpanel"
+            aria-labelledby="historial-tab"
+          >
+            <h4>Historial de Registros</h4>
+            <div class="table-responsive" id="tablaHistorial">
+              <div class="loading-indicator">
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Cargando historial...
               </div>
             </div>
 
-             <div class="tab-pane fade" id="gestion" role="tabpanel" aria-labelledby="gestion-tab">
-               <h4 class="mb-3">Lista de Empleados</h4> <div class="table-responsive" id="tablaEmpleados">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...
-                   </div>
-               </div>
-            </div>
-
-
-            <div class="tab-pane fade" id="proyectos" role="tabpanel" aria-labelledby="proyectos-tab">
-              <div class="form-section">
-                 <h5 class="mb-3">Agregar Nuevo Proyecto</h5>
-                 <form id="add-project-form" action="/agregar-proyecto" method="POST" class="row g-3 needs-validation" novalidate>
-                    <div class="col-md-10">
-                       <label for="add-proj-nombre" class="form-label">Nombre Proyecto</label>
-                       <input type="text" id="add-proj-nombre" name="nombre_proyecto" placeholder="Nombre del proyecto" required class="form-control">
-                       <div class="invalid-feedback">Por favor ingresa un nombre de proyecto.</div>
-                    </div>
-                     <div class="col-md-2 d-flex align-items-end">
-                       <button type="submit" class="btn btn-primary w-100">Agregar</button>
-                    </div>
-                 </form>
-              </div>
-              <h5 class="mt-4 mb-3">Lista de Proyectos</h5> <div class="table-responsive" id="tablaProyectos">
-                   <div class="loading-indicator">
-                       <span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...
-                   </div>
+            <h4 class="mt-4">Total de Horas Trabajadas</h4>
+            <div class="table-responsive" id="tablaTotales">
+              <div class="loading-indicator">
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Cargando totales...
               </div>
             </div>
+          </div>
 
-          </div> </div> </div> </div>
-  <div class="modal fade" id="deleteConfirmModal" tabindex="-1" aria-labelledby="deleteConfirmModalLabel" aria-hidden="true">
-    <div class="modal-dialog"> <div class="modal-content"> <div class="modal-header">
-          <h5 class="modal-title" id="deleteConfirmModalLabel">Confirmar Eliminación</h5>
-          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <!-- ======= PESTAÑA: AGREGAR EMPLEADO ======= -->
+          <div
+            class="tab-pane fade"
+            id="empleados"
+            role="tabpanel"
+            aria-labelledby="empleados-tab"
+          >
+            <div class="form-section">
+              <h5>Agregar Nuevo Empleado</h5>
+              <form
+                id="add-employee-form"
+                action="/agregar-empleado"
+                method="POST"
+                class="row g-3 needs-validation"
+                novalidate
+              >
+                <div class="col-md-5">
+                  <label for="add-emp-nombre" class="form-label"
+                    >Nombre Empleado</label
+                  >
+                  <input
+                    type="text"
+                    id="add-emp-nombre"
+                    name="nombre"
+                    placeholder="Nombre completo"
+                    required
+                    class="form-control"
+                  />
+                  <div class="invalid-feedback">
+                    Por favor ingresa un nombre.
+                  </div>
+                </div>
+                <div class="col-md-5">
+                  <label for="add-emp-pin" class="form-label">PIN</label>
+                  <input
+                    type="text"
+                    id="add-emp-pin"
+                    name="pin"
+                    pattern="\d+"
+                    title="PIN debe ser numérico"
+                    placeholder="PIN (solo números)"
+                    required
+                    class="form-control"
+                  />
+                  <div class="invalid-feedback">
+                    Por favor ingresa un PIN numérico.
+                  </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100">
+                    Agregar
+                  </button>
+                </div>
+              </form>
+            </div>
+          </div>
+
+          <!-- ======= PESTAÑA: GESTIÓN DE EMPLEADOS ======= -->
+          <div
+            class="tab-pane fade"
+            id="gestion"
+            role="tabpanel"
+            aria-labelledby="gestion-tab"
+          >
+            <h4>Lista de Empleados</h4>
+            <div class="table-responsive" id="tablaEmpleados">
+              <div class="loading-indicator">
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Cargando empleados...
+              </div>
+            </div>
+          </div>
+
+          <!-- ======= PESTAÑA: PROYECTOS ======= -->
+          <div
+            class="tab-pane fade"
+            id="proyectos"
+            role="tabpanel"
+            aria-labelledby="proyectos-tab"
+          >
+            <div class="form-section">
+              <h5>Agregar Nuevo Proyecto</h5>
+              <form
+                id="add-project-form"
+                action="/agregar-proyecto"
+                method="POST"
+                class="row g-3 needs-validation"
+                novalidate
+              >
+                <div class="col-md-10">
+                  <label for="add-proj-nombre" class="form-label"
+                    >Nombre Proyecto</label
+                  >
+                  <input
+                    type="text"
+                    id="add-proj-nombre"
+                    name="nombre_proyecto"
+                    placeholder="Nombre del proyecto"
+                    required
+                    class="form-control"
+                  />
+                  <div class="invalid-feedback">
+                    Por favor ingresa un nombre de proyecto.
+                  </div>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                  <button type="submit" class="btn btn-primary w-100">
+                    Agregar
+                  </button>
+                </div>
+              </form>
+            </div>
+            <h5 class="mt-4">Lista de Proyectos</h5>
+            <div class="table-responsive" id="tablaProyectos">
+              <div class="loading-indicator">
+                <span
+                  class="spinner-border spinner-border-sm"
+                  role="status"
+                  aria-hidden="true"
+                ></span>
+                Cargando proyectos...
+              </div>
+            </div>
+          </div>
         </div>
-        <div class="modal-body">
-          ¿Estás seguro de que quieres eliminar <strong id="itemNameToDelete">[Item Name]</strong>? Esta acción no se puede deshacer.
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancelar</button>
-          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">Eliminar</button> </div>
       </div>
     </div>
   </div>
+
+  <!-- MODAL DE CONFIRMACIÓN (para futuros delete) -->
+  <div
+    class="modal fade"
+    id="deleteConfirmModal"
+    tabindex="-1"
+    aria-labelledby="deleteConfirmModalLabel"
+    aria-hidden="true"
+  >
+    <div class="modal-dialog">
+      <div class="modal-content">
+        <div class="modal-header">
+          <h5 class="modal-title" id="deleteConfirmModalLabel">
+            Confirmar Eliminación
+          </h5>
+          <button
+            type="button"
+            class="btn-close"
+            data-bs-dismiss="modal"
+            aria-label="Close"
+          ></button>
+        </div>
+        <div class="modal-body">
+          ¿Estás seguro de que quieres eliminar
+          <strong id="itemNameToDelete">[Item Name]</strong>? Esta acción no se
+          puede deshacer.
+        </div>
+        <div class="modal-footer">
+          <button
+            type="button"
+            class="btn btn-secondary"
+            data-bs-dismiss="modal"
+          >
+            Cancelar
+          </button>
+          <button type="button" class="btn btn-danger" id="confirmDeleteBtn">
+            Eliminar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Bootstrap JS Bundle -->
   <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/js/bootstrap.bundle.min.js"></script>
 
   <script>
-    // --- DOM Element References ---
+    // === VARIABLES GLOBALES ===
     const tablaHistorial = document.getElementById("tablaHistorial");
+    const tablaTotales = document.getElementById("tablaTotales");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
     const tablaProyectos = document.getElementById("tablaProyectos");
-    const adminAlertPlaceholder = document.getElementById('admin-alert-placeholder');
-    // References for modal (kept in case needed elsewhere, but not used by employee/project tables now)
-    const itemNameToDeleteSpan = document.getElementById('itemNameToDelete');
-    const confirmDeleteBtn = document.getElementById('confirmDeleteBtn');
+    const adminAlertPlaceholder = document.getElementById(
+      "admin-alert-placeholder"
+    );
+    const itemNameToDeleteSpan = document.getElementById("itemNameToDelete");
+    const confirmDeleteBtn = document.getElementById("confirmDeleteBtn");
     let deleteConfirmModal = null;
-    let deleteAction = null; // Function to execute on delete confirmation
+    let deleteAction = null;
 
-    // --- Utility Function: Escape HTML ---
+    // === ESCAPE HTML ===
     function escapeHtml(unsafe) {
-       if (typeof unsafe !== 'string') return '';
-       return unsafe
-            .replace(/&/g, "&amp;")
-            .replace(/</g, "&lt;")
-            .replace(/>/g, "&gt;")
-            .replace(/"/g, "&quot;")
-            .replace(/'/g, "&#039;");
+      if (typeof unsafe !== "string") return "";
+      return unsafe
+        .replace(/&/g, "&amp;")
+        .replace(/</g, "&lt;")
+        .replace(/>/g, "&gt;")
+        .replace(/"/g, "&quot;")
+        .replace(/'/g, "&#039;");
     }
 
-    // --- Alert Helper Functions ---
-    function showAdminAlert(message, type = 'danger') {
-      const wrapper = document.createElement('div');
+    // === ALERTAS ===
+    function showAdminAlert(message, type = "danger") {
+      const wrapper = document.createElement("div");
       wrapper.innerHTML = [
         `<div class="alert alert-${type} alert-dismissible fade show" role="alert">`,
         `   <div>${escapeHtml(message)}</div>`,
         '   <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>',
-        '</div>'
-      ].join('');
-      adminAlertPlaceholder.innerHTML = '';
+        "</div>",
+      ].join("");
+      adminAlertPlaceholder.innerHTML = "";
       adminAlertPlaceholder.append(wrapper);
     }
     function clearAdminAlert() {
-        adminAlertPlaceholder.innerHTML = '';
+      adminAlertPlaceholder.innerHTML = "";
     }
 
-    // --- Data Loading Functions ---
+    // === CARGAR HISTORIAL ===
     async function cargarHistorial() {
-      tablaHistorial.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
+      tablaHistorial.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
-          const res = await fetch('/registros');
-          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-          const data = await res.json();
-          if (data.error) { throw new Error(data.error); }
-          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
-          if (data.length === 0) {
-              tablaHistorial.innerHTML = '<p class="text-muted text-center p-3">No hay registros de historial.</p>'; return;
-          }
-          let html = "<table class='table table-bordered table-striped table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (Central Time)</th><th>Proyecto</th></tr></thead><tbody>";
-          data.forEach(r => {
-            const nombre = r.nombre || '';
-            const accion = r.accion || '';
-            const timestamp = r.timestamp || '';
-            const proyecto = r.proyecto || '-';
-            html += `<tr>
+        const res = await fetch("/registros");
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        if (!Array.isArray(data)) {
+          throw new Error("Formato de datos inesperado.");
+        }
+        if (data.length === 0) {
+          tablaHistorial.innerHTML =
+            '<p class="text-muted text-center p-3">No hay registros de historial.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>Acción</th><th>Fecha y Hora (CT)</th><th>Proyecto</th></tr></thead><tbody>";
+        data.forEach((r) => {
+          const nombre = r.nombre || "";
+          const accion = r.accion || "";
+          const timestamp = r.timestamp || "";
+          const proyecto = r.proyecto || "-";
+          html += `<tr>
                         <td>${escapeHtml(nombre)}</td>
                         <td>${escapeHtml(accion)}</td>
                         <td>${escapeHtml(timestamp)}</td>
                         <td>${escapeHtml(proyecto)}</td>
                      </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaHistorial.innerHTML = html;
+        });
+        html += "</tbody></table>";
+        tablaHistorial.innerHTML = html;
       } catch (error) {
-          console.error("Error loading history:", error);
-          tablaHistorial.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar el historial: ${escapeHtml(error.message)}</div>`;
+        console.error("Error loading history:", error);
+        tablaHistorial.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar el historial: ${escapeHtml(
+          error.message
+        )}</div>`;
       }
     }
 
-    // --- MODIFIED: Load Employees (No Delete Column/Button) ---
-    async function cargarEmpleados() {
-      tablaEmpleados.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
+    // === CARGAR TOTALES DE HORAS ===
+    async function cargarTotales() {
+      tablaTotales.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...</div>';
       try {
-          const res = await fetch('/empleados');
-          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-          const data = await res.json();
-          if (data.error) { throw new Error(data.error); }
-          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
-          if (data.length === 0) {
-              tablaEmpleados.innerHTML = '<p class="text-muted text-center p-3">No hay empleados registrados.</p>'; return;
-          }
-          // Removed "Acciones" header
-          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
-          data.forEach(e => {
-            const nombre = e.nombre || '';
-            const pin = e.pin || '';
-            // Removed delete button cell
-            html += `<tr>
+        const res = await fetch("/horas-totales");
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.status !== "success") {
+          throw new Error(data.message || "Error en formato de respuesta.");
+        }
+        const totales = data.totales;
+        if (!Array.isArray(totales) || totales.length === 0) {
+          tablaTotales.innerHTML =
+            '<p class="text-muted text-center p-3">No hay datos de totales.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>Horas Trabajadas</th></tr></thead><tbody>";
+        totales.forEach((item) => {
+          const nombre = item.nombre || "";
+          const horas =
+            item.horas_trabajadas !== undefined
+              ? item.horas_trabajadas
+              : "";
+          html += `<tr>
+                        <td>${escapeHtml(nombre)}</td>
+                        <td>${escapeHtml(horas.toString())}</td>
+                     </tr>`;
+        });
+        html += "</tbody></table>";
+        tablaTotales.innerHTML = html;
+      } catch (error) {
+        console.error("Error loading totals:", error);
+        tablaTotales.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar totales: ${escapeHtml(
+          error.message
+        )}</div>`;
+      }
+    }
+
+    // === CARGAR EMPLEADOS ===
+    async function cargarEmpleados() {
+      tablaEmpleados.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
+      try {
+        const res = await fetch("/empleados");
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        if (!Array.isArray(data)) {
+          throw new Error("Formato de datos inesperado.");
+        }
+        if (data.length === 0) {
+          tablaEmpleados.innerHTML =
+            '<p class="text-muted text-center p-3">No hay empleados registrados.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
+        data.forEach((e) => {
+          const nombre = e.nombre || "";
+          const pin = e.pin || "";
+          html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
                     </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaEmpleados.innerHTML = html;
+        });
+        html += "</tbody></table>";
+        tablaEmpleados.innerHTML = html;
       } catch (error) {
-          console.error("Error loading employees:", error);
-          tablaEmpleados.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los empleados: ${escapeHtml(error.message)}</div>`;
+        console.error("Error loading employees:", error);
+        tablaEmpleados.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los empleados: ${escapeHtml(
+          error.message
+        )}</div>`;
       }
     }
 
-    // --- MODIFIED: Load Projects (No Delete Column/Button) ---
+    // === CARGAR PROYECTOS ===
     async function cargarProyectos() {
-      tablaProyectos.innerHTML = '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
+      tablaProyectos.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
-          const res = await fetch('/proyectos');
-          if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
-          const data = await res.json();
-          if (data.error) { throw new Error(data.error); }
-          if (!Array.isArray(data)) { throw new Error("Formato de datos inesperado."); }
-          if (data.length === 0) {
-              tablaProyectos.innerHTML = '<p class="text-muted text-center p-3">No hay proyectos registrados.</p>';
-              return;
-          }
-          // Removed "Acciones" header
-          let html = "<table class='table table-bordered table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
-          data.forEach(p => {
-            const nombre = p.nombre || '';
-            // Removed delete button cell
-            html += `<tr>
+        const res = await fetch("/proyectos");
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.error) {
+          throw new Error(data.error);
+        }
+        if (!Array.isArray(data)) {
+          throw new Error("Formato de datos inesperado.");
+        }
+        if (data.length === 0) {
+          tablaProyectos.innerHTML =
+            '<p class="text-muted text-center p-3">No hay proyectos registrados.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
+        data.forEach((p) => {
+          const nombre = p.nombre || "";
+          html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                     </tr>`;
-          });
-          html += "</tbody></table>";
-          tablaProyectos.innerHTML = html;
+        });
+        html += "</tbody></table>";
+        tablaProyectos.innerHTML = html;
       } catch (error) {
-          console.error("Error loading projects:", error);
-          tablaProyectos.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los proyectos: ${escapeHtml(error.message)}</div>`;
+        console.error("Error loading projects:", error);
+        tablaProyectos.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar los proyectos: ${escapeHtml(
+          error.message
+        )}</div>`;
       }
     }
 
-    // --- Delete Logic (Kept for potential future use, but not called by employee/project tables) ---
+    // === LÓGICA DE ELIMINACIÓN (modal) ===
     function confirmDeleteItem(buttonElement, itemType) {
-        // This function is no longer called by the employee/project tables
-        // but is kept here in case it's needed for other features later.
-        console.log(`confirmDeleteItem called for type: ${itemType}`);
-        const itemName = buttonElement.getAttribute('data-name');
-        if (!itemNameToDeleteSpan || !deleteConfirmModal) {
-             console.error("Modal elements not found or modal not initialized."); return;
-        }
-        if (!itemName) { console.error("Item name not found."); return; }
-        itemNameToDeleteSpan.textContent = itemName;
-        if (itemType === 'employee') { // Example: Still define action if needed
-            deleteAction = () => performDelete('/eliminar-empleado', itemName, cargarEmpleados);
-        } else if (itemType === 'project') {
-             deleteAction = () => performDelete('/eliminar-proyecto', itemName, cargarProyectos);
-        } else { console.error("Unknown item type:", itemType); return; }
-        deleteConfirmModal.show();
+      console.log(`confirmDeleteItem called for type: ${itemType}`);
+      const itemName = buttonElement.getAttribute("data-name");
+      if (!itemNameToDeleteSpan || !deleteConfirmModal) {
+        console.error(
+          "Modal elements not found or modal not initialized."
+        );
+        return;
+      }
+      if (!itemName) {
+        console.error("Item name not found.");
+        return;
+      }
+      itemNameToDeleteSpan.textContent = itemName;
+      if (itemType === "employee") {
+        deleteAction = () =>
+          performDelete("/eliminar-empleado", itemName, cargarEmpleados);
+      } else if (itemType === "project") {
+        deleteAction = () =>
+          performDelete("/eliminar-proyecto", itemName, cargarProyectos);
+      } else {
+        console.error("Unknown item type:", itemType);
+        return;
+      }
+      deleteConfirmModal.show();
     }
     async function performDelete(endpoint, name, refreshFunction) {
-        // This function is no longer called by the employee/project tables
-        console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
-        if (!name || !endpoint || !refreshFunction) return;
-        clearAdminAlert();
-        const deleteBtn = document.getElementById('confirmDeleteBtn');
-        if(deleteBtn) deleteBtn.disabled = true;
-        try {
-            const response = await fetch(endpoint, {
-                method: 'POST', headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ nombre: name })
-            });
-            const result = await response.json();
-            if (response.ok && result.status === 'success') {
-                showAdminAlert(`${name} eliminado correctamente.`, 'success');
-                refreshFunction();
-            } else { throw new Error(result.message || `Error ${response.status}`); }
-        } catch (error) {
-            console.error(`Error deleting ${name}:`, error);
-            showAdminAlert(`Error al eliminar ${name}: ${escapeHtml(error.message)}`, 'danger');
-        } finally {
-             if (deleteConfirmModal) deleteConfirmModal.hide();
-             if(deleteBtn) deleteBtn.disabled = false;
-             deleteAction = null;
+      console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
+      if (!name || !endpoint || !refreshFunction) return;
+      clearAdminAlert();
+      const deleteBtn = document.getElementById("confirmDeleteBtn");
+      if (deleteBtn) deleteBtn.disabled = true;
+      try {
+        const response = await fetch(endpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ nombre: name }),
+        });
+        const result = await response.json();
+        if (response.ok && result.status === "success") {
+          showAdminAlert(`${name} eliminado correctamente.`, "success");
+          refreshFunction();
+        } else {
+          throw new Error(result.message || `Error ${response.status}`);
         }
+      } catch (error) {
+        console.error(`Error deleting ${name}:`, error);
+        showAdminAlert(
+          `Error al eliminar ${name}: ${escapeHtml(error.message)}`,
+          "danger"
+        );
+      } finally {
+        if (deleteConfirmModal) deleteConfirmModal.hide();
+        if (deleteBtn) deleteBtn.disabled = false;
+        deleteAction = null;
+      }
     }
 
-    // --- Unified Form Submission Handling ---
-    // (No changes needed in handleFormSubmit)
-    async function handleFormSubmit(event, endpoint, successMessage, refreshFunction) {
-        event.preventDefault();
-        clearAdminAlert();
-        const form = event.target;
-        const formData = new FormData(form);
-        let isValid = true;
-        let formType = form.id === 'add-employee-form' ? 'employee' : (form.id === 'add-project-form' ? 'project' : '');
+    // === ENVÍO UNIFICADO DE FORMULARIOS ===
+    async function handleFormSubmit(
+      event,
+      endpoint,
+      successMessage,
+      refreshFunction
+    ) {
+      event.preventDefault();
+      clearAdminAlert();
+      const form = event.target;
+      const formData = new FormData(form);
+      let isValid = true;
+      let formType =
+        form.id === "add-employee-form"
+          ? "employee"
+          : form.id === "add-project-form"
+          ? "project"
+          : "";
 
-        form.classList.remove('was-validated');
-        for (let [key, value] of formData.entries()) {
-           let trimmedValue = typeof value === 'string' ? value.trim() : value;
-           if ((formType === 'employee' && (key === 'nombre' || key === 'pin') && !trimmedValue) ||
-               (formType === 'project' && key === 'nombre_proyecto' && !trimmedValue)) {
-                 isValid = false; break;
-            }
-           if (formType === 'employee' && key === 'pin' && !/^\d+$/.test(trimmedValue)) {
-                showAdminAlert('PIN debe ser numérico.', 'warning');
-                form.classList.add('was-validated');
-                return;
-           }
+      form.classList.remove("was-validated");
+      for (let [key, value] of formData.entries()) {
+        let trimmedValue = typeof value === "string" ? value.trim() : value;
+        if (
+          (formType === "employee" &&
+            (key === "nombre" || key === "pin") &&
+            !trimmedValue) ||
+          (formType === "project" &&
+            key === "nombre_proyecto" &&
+            !trimmedValue)
+        ) {
+          isValid = false;
+          break;
         }
-        form.classList.add('was-validated');
-        if (!form.checkValidity() || !isValid) {
-             event.stopPropagation();
-             showAdminAlert('Por favor, corrige los errores en el formulario.', 'warning');
-             return;
+        if (formType === "employee" && key === "pin" && !/^\d+$/.test(trimmedValue)) {
+          showAdminAlert("PIN debe ser numérico.", "warning");
+          form.classList.add("was-validated");
+          return;
         }
-        const submitButton = form.querySelector('button[type="submit"]');
-        if (submitButton) submitButton.disabled = true;
+      }
+      form.classList.add("was-validated");
+      if (!form.checkValidity() || !isValid) {
+        event.stopPropagation();
+        showAdminAlert("Por favor, corrige los errores en el formulario.", "warning");
+        return;
+      }
+      const submitButton = form.querySelector('button[type="submit"]');
+      if (submitButton) submitButton.disabled = true;
 
-        try {
-            const response = await fetch(endpoint, { method: 'POST', body: formData });
-            if (response.ok && response.redirected) {
-                const redirectedUrl = new URL(response.url);
-                const successParam = redirectedUrl.searchParams.get('success');
-                const errorParam = redirectedUrl.searchParams.get('error');
-                if (errorParam) throw new Error(errorParam);
-                showAdminAlert(successParam || successMessage, 'success');
-                form.reset();
-                form.classList.remove('was-validated');
-                refreshFunction();
-                if (redirectedUrl.hash) handleUrlHash(redirectedUrl.hash);
-            } else if (!response.ok) {
-                 const errorText = await response.text();
-                 throw new Error(errorText || `Error ${response.status}`);
+      try {
+        const response = await fetch(endpoint, { method: "POST", body: formData });
+        if (response.ok && response.redirected) {
+          const redirectedUrl = new URL(response.url);
+          const successParam = redirectedUrl.searchParams.get("success");
+          const errorParam = redirectedUrl.searchParams.get("error");
+          if (errorParam) throw new Error(errorParam);
+          showAdminAlert(successParam || successMessage, "success");
+          form.reset();
+          form.classList.remove("was-validated");
+          refreshFunction();
+          if (redirectedUrl.hash) handleUrlHash(redirectedUrl.hash);
+        } else if (!response.ok) {
+          const errorText = await response.text();
+          throw new Error(errorText || `Error ${response.status}`);
+        } else {
+          showAdminAlert(successMessage, "success");
+          form.reset();
+          form.classList.remove("was-validated");
+          refreshFunction();
+        }
+      } catch (error) {
+        console.error("Error submitting form:", error);
+        showAdminAlert(`Error: ${escapeHtml(error.message)}`, "danger");
+      } finally {
+        if (submitButton) submitButton.disabled = false;
+      }
+    }
+
+    // === MANEJO DEL HASH EN LA URL ===
+    function handleUrlHash(hashValue = window.location.hash) {
+      const hash = hashValue;
+      if (hash) {
+        const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
+        if (tabButton) {
+          try {
+            const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+            if (tab && !tabButton.classList.contains("active")) tab.show();
+          } catch (e) {
+            console.warn("Bootstrap Tab component error:", e);
+          }
+        }
+      }
+    }
+
+    // === INICIALIZACIÓN AL CARGAR DOM ===
+    document.addEventListener("DOMContentLoaded", () => {
+      // Aparecer con fade-in el contenedor principal
+      document.querySelector(".container-admin").classList.add("show");
+
+      // Inicializar el modal (en caso de que se use)
+      try {
+        const modalElement = document.getElementById("deleteConfirmModal");
+        if (modalElement) {
+          deleteConfirmModal = new bootstrap.Modal(modalElement);
+        } else {
+          console.error("Modal para eliminación no encontrado en el DOM.");
+        }
+
+        if (confirmDeleteBtn) {
+          confirmDeleteBtn.addEventListener("click", () => {
+            if (typeof deleteAction === "function") {
+              deleteAction();
             } else {
-                 showAdminAlert(successMessage, 'success'); form.reset(); form.classList.remove('was-validated'); refreshFunction();
+              console.error("No se especificó acción de eliminación.");
             }
-        } catch (error) {
-             console.error("Error submitting form:", error);
-             showAdminAlert(`Error: ${escapeHtml(error.message)}`, 'danger');
-        } finally {
-             if (submitButton) submitButton.disabled = false;
+          });
+        } else {
+          console.error("Botón de confirmar eliminación no encontrado.");
         }
-    }
+      } catch (e) {
+        console.error("Error al inicializar el modal:", e);
+      }
 
+      // Vincular envío de formularios
+      const addEmployeeForm = document.getElementById("add-employee-form");
+      const addProjectForm = document.getElementById("add-project-form");
+      if (addEmployeeForm)
+        addEmployeeForm.addEventListener("submit", (e) =>
+          handleFormSubmit(e, "/agregar-empleado", "Empleado agregado", cargarEmpleados)
+        );
+      if (addProjectForm)
+        addProjectForm.addEventListener("submit", (e) =>
+          handleFormSubmit(e, "/agregar-proyecto", "Proyecto agregado", cargarProyectos)
+        );
 
-    // --- URL Hash Handling ---
-     function handleUrlHash(hashValue = window.location.hash) {
-        const hash = hashValue;
-        if (hash) {
-            const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
-            if (tabButton) {
-                try {
-                   const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
-                   if (tab && !tabButton.classList.contains('active')) tab.show();
-                } catch (e) { console.warn("Bootstrap Tab component error:", e); }
-            }
-        }
-     }
+      // Cargar datos iniciales
+      cargarHistorial();
+      cargarTotales();
+      cargarEmpleados();
+      cargarProyectos();
 
-    // --- Initialization ---
-    document.addEventListener('DOMContentLoaded', () => {
-        // Initialize Modal (still needed if confirmDeleteItem is kept)
-        try {
-            const modalElement = document.getElementById('deleteConfirmModal');
-            if (modalElement) {
-                deleteConfirmModal = new bootstrap.Modal(modalElement);
-            } else { console.error("Delete confirmation modal element not found in DOM."); }
-
-             if (confirmDeleteBtn) {
-                 confirmDeleteBtn.addEventListener('click', () => {
-                    if (typeof deleteAction === 'function') { deleteAction(); }
-                    else { console.error("No delete action specified for modal confirmation."); }
-                });
-             } else { console.error("Confirm delete button ('confirmDeleteBtn') not found in DOM."); }
-
-        } catch(e) { console.error("Failed to initialize Bootstrap modal or attach listener:", e); }
-
-        // Attach Form Handlers
-        const addEmployeeForm = document.getElementById('add-employee-form');
-        const addProjectForm = document.getElementById('add-project-form');
-        if (addEmployeeForm) addEmployeeForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-empleado', 'Empleado agregado', cargarEmpleados));
-        if (addProjectForm) addProjectForm.addEventListener('submit', (e) => handleFormSubmit(e, '/agregar-proyecto', 'Proyecto agregado', cargarProyectos));
-
-        // Initial Data Loads
-        cargarHistorial();
-        cargarEmpleados(); // Will load employees without delete button
-        cargarProyectos(); // Will load projects without delete button
-
-        // Handle URL Params/Hash
-        const urlParams = new URLSearchParams(window.location.search);
-        const successMsg = urlParams.get('success');
-        const errorMsg = urlParams.get('error');
-        const currentHash = window.location.hash;
-        if (successMsg) {
-            showAdminAlert(successMsg, 'success');
-            window.history.replaceState({}, document.title, window.location.pathname + currentHash);
-        } else if (errorMsg) {
-             showAdminAlert(errorMsg, 'danger');
-             window.history.replaceState({}, document.title, window.location.pathname + currentHash);
-        }
-        handleUrlHash();
-        window.addEventListener('hashchange', () => handleUrlHash(), false);
-        if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
+      // Manejar parámetros en URL (success/error) y hash
+      const urlParams = new URLSearchParams(window.location.search);
+      const successMsg = urlParams.get("success");
+      const errorMsg = urlParams.get("error");
+      const currentHash = window.location.hash;
+      if (successMsg) {
+        showAdminAlert(successMsg, "success");
+        window.history.replaceState({}, document.title, window.location.pathname + currentHash);
+      } else if (errorMsg) {
+        showAdminAlert(errorMsg, "danger");
+        window.history.replaceState({}, document.title, window.location.pathname + currentHash);
+      }
+      handleUrlHash();
+      window.addEventListener("hashchange", () => handleUrlHash(), false);
+      if (currentHash) setTimeout(() => handleUrlHash(currentHash), 150);
     });
-
   </script>
 </body>
 </html>
