@@ -284,7 +284,7 @@
             role="tabpanel"
             aria-labelledby="historial-tab"
           >
-            <!-- Sub-tabs para “Por Fecha” y “Por Semana” -->
+            <!-- Sub-tabs para “Por Fecha”, “Por Día” y “Por Semana” -->
             <ul class="nav nav-pills mb-3" id="historialSubTabs" role="tablist">
               <li class="nav-item" role="presentation">
                 <button
@@ -296,6 +296,18 @@
                   role="tab"
                 >
                   Por Fecha
+                </button>
+              </li>
+              <li class="nav-item" role="presentation">
+                <button
+                  class="nav-link"
+                  id="por-dia-tab"
+                  data-bs-toggle="pill"
+                  data-bs-target="#por-dia"
+                  type="button"
+                  role="tab"
+                >
+                  Por Día
                 </button>
               </li>
               <li class="nav-item" role="presentation">
@@ -340,6 +352,26 @@
                       aria-hidden="true"
                     ></span>
                     Cargando totales...
+                  </div>
+                </div>
+              </div>
+
+              <!-- ====== Totales “Por Día” ====== -->
+              <div
+                class="tab-pane fade"
+                id="por-dia"
+                role="tabpanel"
+                aria-labelledby="por-dia-tab"
+              >
+                <h4>Totales de Horas por Día</h4>
+                <div class="table-responsive" id="tablaTotalesDiarios">
+                  <div class="loading-indicator">
+                    <span
+                      class="spinner-border spinner-border-sm"
+                      role="status"
+                      aria-hidden="true"
+                    ></span>
+                    Cargando totales diarios...
                   </div>
                 </div>
               </div>
@@ -499,7 +531,7 @@
     </div>
   </div>
 
-  <!-- MODAL DE CONFIRMACIÓN (para futuros delete) -->
+  <!-- MODAL DE CONFIRMACIÓN (para eliminar) -->
   <div
     class="modal fade"
     id="deleteConfirmModal"
@@ -548,9 +580,10 @@
     // === VARIABLES GLOBALES ===
     const tablaHistorial = document.getElementById("tablaHistorial");
     const tablaTotales = document.getElementById("tablaTotales");
+    const tablaTotalesDiarios = document.getElementById("tablaTotalesDiarios");
+    const tablaTotalesSemanal = document.getElementById("tablaTotalesSemanal");
     const tablaEmpleados = document.getElementById("tablaEmpleados");
     const tablaProyectos = document.getElementById("tablaProyectos");
-    const tablaTotalesSemanal = document.getElementById("tablaTotalesSemanal");
     const adminAlertPlaceholder = document.getElementById(
       "admin-alert-placeholder"
     );
@@ -591,7 +624,12 @@
       tablaHistorial.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando historial...</div>';
       try {
-        const res = await fetch("/registros");
+        const res = await fetch("/registros", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaHistorial.innerHTML = "";
+          return;
+        }
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -634,7 +672,12 @@
       tablaTotales.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales...</div>';
       try {
-        const res = await fetch("/horas-totales");
+        const res = await fetch("/horas-totales", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaTotales.innerHTML = "";
+          return;
+        }
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.status !== "success") {
@@ -650,10 +693,7 @@
           "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>Horas Trabajadas</th></tr></thead><tbody>";
         totales.forEach((item) => {
           const nombre = item.nombre || "";
-          const horas =
-            item.horas_trabajadas !== undefined
-              ? item.horas_trabajadas
-              : "";
+          const horas = item.horas_trabajadas !== undefined ? item.horas_trabajadas : "";
           html += `<tr>
                         <td>${escapeHtml(nombre)}</td>
                         <td>${escapeHtml(horas.toString())}</td>
@@ -669,14 +709,62 @@
       }
     }
 
+    // === CARGAR TOTALES DIARIOS ===
+    async function cargarTotalesDiarios() {
+      tablaTotalesDiarios.innerHTML =
+        '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales diarios...</div>';
+      try {
+        const res = await fetch("/horas-totales-diarias", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaTotalesDiarios.innerHTML = "";
+          return;
+        }
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const data = await res.json();
+        if (data.status !== "success") {
+          throw new Error(data.message || "Error en formato de respuesta.");
+        }
+        const diarios = data.totales_diarios;
+        if (!Array.isArray(diarios) || diarios.length === 0) {
+          tablaTotalesDiarios.innerHTML =
+            '<p class="text-muted text-center p-3">No hay datos de totales diarios.</p>';
+          return;
+        }
+        let html =
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Fecha</th><th>Nombre</th><th>Horas Trabajadas</th></tr></thead><tbody>";
+        diarios.forEach((item) => {
+          const fecha = item.fecha || "";
+          const nombre = item.nombre || "";
+          const horas = item.horas_trabajadas !== undefined ? item.horas_trabajadas : "";
+          html += `<tr>
+                    <td>${escapeHtml(fecha)}</td>
+                    <td>${escapeHtml(nombre)}</td>
+                    <td>${escapeHtml(horas.toString())}</td>
+                   </tr>`;
+        });
+        html += "</tbody></table>";
+        tablaTotalesDiarios.innerHTML = html;
+      } catch (error) {
+        console.error("Error loading daily totals:", error);
+        tablaTotalesDiarios.innerHTML = `<div class="alert alert-danger m-3" role="alert">Error al cargar totales diarios: ${escapeHtml(
+          error.message
+        )}</div>`;
+      }
+    }
+
     // === CARGAR TOTALES SEMANALES ===
     async function cargarTotalesSemanal() {
       tablaTotalesSemanal.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando totales semanales...</div>';
       try {
-        const res = await fetch("/horas-totales-semanal");
-        if (!res.ok)
-          throw new Error(`Error ${res.status}: ${res.statusText}`);
+        const res = await fetch("/horas-totales-semanal", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaTotalesSemanal.innerHTML = "";
+          return;
+        }
+        if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.status !== "success") {
           throw new Error(data.message || "Error en formato de respuesta.");
@@ -692,10 +780,7 @@
         semanales.forEach((item) => {
           const semana = item.semana || "";
           const nombre = item.nombre || "";
-          const horas =
-            item.horas_trabajadas !== undefined
-              ? item.horas_trabajadas
-              : "";
+          const horas = item.horas_trabajadas !== undefined ? item.horas_trabajadas : "";
           html += `<tr>
                         <td>${escapeHtml(semana)}</td>
                         <td>${escapeHtml(nombre)}</td>
@@ -717,7 +802,12 @@
       tablaEmpleados.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando empleados...</div>';
       try {
-        const res = await fetch("/empleados");
+        const res = await fetch("/empleados", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaEmpleados.innerHTML = "";
+          return;
+        }
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -732,13 +822,22 @@
           return;
         }
         let html =
-          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th></tr></thead><tbody>";
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre</th><th>PIN</th><th>Acciones</th></tr></thead><tbody>";
         data.forEach((e) => {
           const nombre = e.nombre || "";
           const pin = e.pin || "";
           html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
                       <td>${escapeHtml(pin)}</td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          data-name="${escapeHtml(nombre)}"
+                          onclick="confirmDeleteItem(this, 'employee')"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
                     </tr>`;
         });
         html += "</tbody></table>";
@@ -756,7 +855,12 @@
       tablaProyectos.innerHTML =
         '<div class="loading-indicator"><span class="spinner-border spinner-border-sm" role="status" aria-hidden="true"></span> Cargando proyectos...</div>';
       try {
-        const res = await fetch("/proyectos");
+        const res = await fetch("/proyectos", { credentials: "include" });
+        if (res.status === 401 || res.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          tablaProyectos.innerHTML = "";
+          return;
+        }
         if (!res.ok) throw new Error(`Error ${res.status}: ${res.statusText}`);
         const data = await res.json();
         if (data.error) {
@@ -771,11 +875,20 @@
           return;
         }
         let html =
-          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th></tr></thead><tbody>";
+          "<table class='table table-custom table-hover align-middle'><thead><tr><th>Nombre del Proyecto</th><th>Acciones</th></tr></thead><tbody>";
         data.forEach((p) => {
           const nombre = p.nombre || "";
           html += `<tr>
                       <td>${escapeHtml(nombre)}</td>
+                      <td>
+                        <button
+                          class="btn btn-sm btn-danger"
+                          data-name="${escapeHtml(nombre)}"
+                          onclick="confirmDeleteItem(this, 'project')"
+                        >
+                          <i class="bi bi-trash"></i>
+                        </button>
+                      </td>
                     </tr>`;
         });
         html += "</tbody></table>";
@@ -790,18 +903,7 @@
 
     // === LÓGICA DE ELIMINACIÓN (modal) ===
     function confirmDeleteItem(buttonElement, itemType) {
-      console.log(`confirmDeleteItem called for type: ${itemType}`);
       const itemName = buttonElement.getAttribute("data-name");
-      if (!itemNameToDeleteSpan || !deleteConfirmModal) {
-        console.error(
-          "Modal elements not found or modal not initialized."
-        );
-        return;
-      }
-      if (!itemName) {
-        console.error("Item name not found.");
-        return;
-      }
       itemNameToDeleteSpan.textContent = itemName;
       if (itemType === "employee") {
         deleteAction = () =>
@@ -810,23 +912,27 @@
         deleteAction = () =>
           performDelete("/eliminar-proyecto", itemName, cargarProyectos);
       } else {
-        console.error("Unknown item type:", itemType);
-        return;
+        deleteAction = null;
       }
       deleteConfirmModal.show();
     }
     async function performDelete(endpoint, name, refreshFunction) {
-      console.log(`performDelete called: endpoint=${endpoint}, name=${name}`);
       if (!name || !endpoint || !refreshFunction) return;
       clearAdminAlert();
       const deleteBtn = document.getElementById("confirmDeleteBtn");
       if (deleteBtn) deleteBtn.disabled = true;
+
       try {
         const response = await fetch(endpoint, {
           method: "POST",
+          credentials: "include",
           headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ nombre: name }),
         });
+        if (response.status === 401 || response.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          return;
+        }
         const result = await response.json();
         if (response.ok && result.status === "success") {
           showAdminAlert(`${name} eliminado correctamente.`, "success");
@@ -835,7 +941,6 @@
           throw new Error(result.message || `Error ${response.status}`);
         }
       } catch (error) {
-        console.error(`Error deleting ${name}:`, error);
         showAdminAlert(
           `Error al eliminar ${name}: ${escapeHtml(error.message)}`,
           "danger"
@@ -896,7 +1001,15 @@
       if (submitButton) submitButton.disabled = true;
 
       try {
-        const response = await fetch(endpoint, { method: "POST", body: formData });
+        const response = await fetch(endpoint, {
+          method: "POST",
+          credentials: "include",
+          body: formData
+        });
+        if (response.status === 401 || response.status === 403) {
+          showAdminAlert("No autorizado. Inicia sesión de nuevo.", "warning");
+          return;
+        }
         if (response.ok && response.redirected) {
           const redirectedUrl = new URL(response.url);
           const successParam = redirectedUrl.searchParams.get("success");
@@ -917,7 +1030,6 @@
           refreshFunction();
         }
       } catch (error) {
-        console.error("Error submitting form:", error);
         showAdminAlert(`Error: ${escapeHtml(error.message)}`, "danger");
       } finally {
         if (submitButton) submitButton.disabled = false;
@@ -930,12 +1042,8 @@
       if (hash) {
         const tabButton = document.querySelector(`button[data-bs-target="${hash}"]`);
         if (tabButton) {
-          try {
-            const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
-            if (tab && !tabButton.classList.contains("active")) tab.show();
-          } catch (e) {
-            console.warn("Bootstrap Tab component error:", e);
-          }
+          const tab = bootstrap.Tab.getOrCreateInstance(tabButton);
+          if (tab && !tabButton.classList.contains("active")) tab.show();
         }
       }
     }
@@ -945,28 +1053,18 @@
       // Aparecer con fade-in el contenedor principal
       document.querySelector(".container-admin").classList.add("show");
 
-      // Inicializar el modal (en caso de que se use)
-      try {
-        const modalElement = document.getElementById("deleteConfirmModal");
-        if (modalElement) {
-          deleteConfirmModal = new bootstrap.Modal(modalElement);
-        } else {
-          console.error("Modal para eliminación no encontrado en el DOM.");
-        }
+      // Inicializar el modal (para eliminación)
+      const modalElement = document.getElementById("deleteConfirmModal");
+      if (modalElement) {
+        deleteConfirmModal = new bootstrap.Modal(modalElement);
+      }
 
-        if (confirmDeleteBtn) {
-          confirmDeleteBtn.addEventListener("click", () => {
-            if (typeof deleteAction === "function") {
-              deleteAction();
-            } else {
-              console.error("No se especificó acción de eliminación.");
-            }
-          });
-        } else {
-          console.error("Botón de confirmar eliminación no encontrado.");
-        }
-      } catch (e) {
-        console.error("Error al inicializar el modal:", e);
+      if (confirmDeleteBtn) {
+        confirmDeleteBtn.addEventListener("click", () => {
+          if (typeof deleteAction === "function") {
+            deleteAction();
+          }
+        });
       }
 
       // Vincular envío de formularios
@@ -984,6 +1082,7 @@
       // Cargar datos iniciales
       cargarHistorial();
       cargarTotales();
+      cargarTotalesDiarios();
       cargarTotalesSemanal();
       cargarEmpleados();
       cargarProyectos();
