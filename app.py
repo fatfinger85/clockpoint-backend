@@ -351,7 +351,7 @@ def exportar():
         return "Backend database not configured.", 500
 
     try:
-        # 1) Leer todos los registros (nombre, acción, timestamp, proyecto)
+        # --- 1) Leer todos los registros desde Supabase ---
         registros = (
             supabase.table("registros")
             .select("nombre, accion, timestamp, proyecto")
@@ -363,101 +363,175 @@ def exportar():
             logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
             return "Error al generar archivo: formato inesperado de datos.", 500
 
-        # 2) Construir DataFrame básico y extraer fecha/hora
+        # --- 2) Construir DataFrame principal y separar fecha/hora ---
         df = pd.DataFrame(registros)
         if "timestamp" not in df.columns:
             return "Error: la columna 'timestamp' no existe en la tabla registros.", 500
 
-        # Convertir timestamp a datetime y partir en fecha/hora
+        # Convertir 'timestamp' a datetime
         df["timestamp"] = pd.to_datetime(
             df["timestamp"], format="%Y-%m-%d %H:%M:%S", errors="coerce"
         )
+        # Crear columnas 'fecha' y 'hora' a partir de 'timestamp'
         df["fecha"] = df["timestamp"].dt.strftime("%Y-%m-%d").fillna("")
-        df["hora"]  = df["timestamp"].dt.strftime("%H:%M:%S").fillna("")
+        df["hora"] = df["timestamp"].dt.strftime("%H:%M:%S").fillna("")
 
-        # 3) Calcular Totales Globales (por usuario)
+        # --- 3) Calcular Totales Globales (por usuario) ---
         total_por_usuario = defaultdict(float)
-        pendiente_entrada = {}
-        # Recorrer en orden cronológico
+        pendiente_entrada_global = {}
+
+        # Recorremos cada fila en orden cronológico
         for _, row in df.iterrows():
             nombre = row["nombre"]
             accion = (row["accion"] or "").strip().lower()
             ts = row["timestamp"]
+
             if pd.isna(ts):
                 continue
-            if accion == "clock in":
-                if pendiente_entrada.get(nombre) is None:
-                    pendiente_entrada[nombre] = ts
-            elif accion == "clock out":
-                inicio = pendiente_entrada.get(nombre)
-                if inicio is not None:
-                    total_por_usuario[nombre] += (ts - inicio).total_seconds()
-                    pendiente_entrada[nombre] = None
 
-        # DataFrame de totales globales
+            if accion == "clock in":
+                if pendiente_entrada_global.get(nombre) is None:
+                    pendiente_entrada_global[nombre] = ts
+
+            elif accion == "clock out":
+                inicio = pendiente_entrada_global.get(nombre)
+                if inicio is not None and ts > inicio:
+                    total_por_usuario[nombre] += (ts - inicio).total_seconds()
+                    pendiente_entrada_global[nombre] = None
+
         totales_list = []
         for nombre, segs in total_por_usuario.items():
             horas = round(segs / 3600, 2)
             totales_list.append({"nombre": nombre, "horas_trabajadas": horas})
         df_totales = pd.DataFrame(totales_list)
 
-        # 4) Calcular Totales Semanales (por usuario + semana ISO)
+        # --- 4) Calcular Totales Semanales (por usuario + semana ISO) ---
         total_por_usuario_semana = defaultdict(float)
-        pendiente_sem = {}
+        pendiente_entrada_sem = {}
+
         for _, row in df.iterrows():
             nombre = row["nombre"]
             accion = (row["accion"] or "").strip().lower()
             ts = row["timestamp"]
+
             if pd.isna(ts):
                 continue
 
             if accion == "clock in":
-                if pendiente_sem.get(nombre) is None:
-                    pendiente_sem[nombre] = ts
+                if pendiente_entrada_sem.get(nombre) is None:
+                    pendiente_entrada_sem[nombre] = ts
+
             elif accion == "clock out":
-                inicio = pendiente_sem.get(nombre)
-                if inicio is not None:
+                inicio = pendiente_entrada_sem.get(nombre)
+                if inicio is not None and ts > inicio:
                     delta_seg = (ts - inicio).total_seconds()
                     iso_year, iso_week, _ = inicio.isocalendar()
                     key = (nombre, iso_year, iso_week)
                     total_por_usuario_semana[key] += delta_seg
-                    pendiente_sem[nombre] = None
+                    pendiente_entrada_sem[nombre] = None
 
         totales_semana_list = []
         for (nombre, year, week), segs in total_por_usuario_semana.items():
             horas = round(segs / 3600, 2)
-            # Calcular rango de fechas de esa semana ISO
+            # Calcular rango de fechas: “Jun 2–8, 2025”
             lunes = datetime.fromisocalendar(year, week, 1)
             domingo = lunes + timedelta(days=6)
-            mes_abrev = lunes.strftime("%b")     # p.ej. “Jun”
-            dia_inicio = lunes.day               # p.ej. 2
-            dia_fin = domingo.day                # p.ej. 8
-            anio = lunes.year                    # p.ej. 2025
+            mes_abrev = lunes.strftime("%b")   # ej. "Jun"
+            dia_inicio = lunes.day             # ej. 2
+            dia_fin = domingo.day              # ej. 8
+            anio = lunes.year                  # ej. 2025
             semana_str = f"Semana {week} ({mes_abrev} {dia_inicio}–{dia_fin}, {anio})"
             totales_semana_list.append({
                 "nombre": nombre,
                 "semana": semana_str,
                 "horas_trabajadas": horas
             })
-
         df_totales_semanal = pd.DataFrame(totales_semana_list)
 
-        # 5) Preparar el Excel con tres hojas en memoria
+        # --- 5) Calcular Totales Diarios (por usuario + fecha), con prorrateo si cruza medianoche ---
+        total_por_usuario_fecha = defaultdict(float)
+        pendiente_entrada_diaria = {}
+
+        # Convertimos a lista de dicts para iterar con facilidad manteniendo orden cronológico
+        records = df[["nombre", "accion", "timestamp"]].to_dict("records")
+
+        for idx, rec in enumerate(records):
+            nombre = rec.get("nombre")
+            accion = (rec.get("accion") or "").strip().lower()
+            ts = rec.get("timestamp")
+
+            if ts is None or pd.isna(ts):
+                continue
+
+            if accion == "clock in":
+                if pendiente_entrada_diaria.get(nombre) is None:
+                    pendiente_entrada_diaria[nombre] = ts
+
+            elif accion == "clock out":
+                inicio = pendiente_entrada_diaria.get(nombre)
+                if inicio is None or ts <= inicio:
+                    # Nada que hacer si no había entrada, o si fue mal ordenado
+                    pendiente_entrada_diaria[nombre] = None
+                    continue
+
+                # Si misma fecha
+                if inicio.date() == ts.date():
+                    segundos = (ts - inicio).total_seconds()
+                    fecha_str = inicio.strftime("%Y-%m-%d")
+                    total_por_usuario_fecha[(nombre, fecha_str)] += segundos
+
+                else:
+                    # --- Prorrateo: creamos trozos entre inicio y ts ---
+                    # 1) Primer trozo: desde 'inicio' hasta la medianoche de ese día
+                    next_midnight = datetime(inicio.year, inicio.month, inicio.day) + timedelta(days=1)
+                    segundos_primero = (next_midnight - inicio).total_seconds()
+                    fecha_inicio_str = inicio.strftime("%Y-%m-%d")
+                    total_por_usuario_fecha[(nombre, fecha_inicio_str)] += segundos_primero
+
+                    # 2) Días intermedios completos, si los hay
+                    cursor = next_midnight
+                    while cursor.date() < ts.date():
+                        fecha_inter_str = cursor.strftime("%Y-%m-%d")
+                        total_por_usuario_fecha[(nombre, fecha_inter_str)] += 24 * 3600
+                        cursor = cursor + timedelta(days=1)
+
+                    # 3) Último trozo: desde medianoche del día final hasta ts
+                    mid_final = datetime(ts.year, ts.month, ts.day)
+                    segundos_ultimo = (ts - mid_final).total_seconds()
+                    fecha_final_str = ts.strftime("%Y-%m-%d")
+                    total_por_usuario_fecha[(nombre, fecha_final_str)] += segundos_ultimo
+
+                pendiente_entrada_diaria[nombre] = None
+
+        totales_diarios_list = []
+        for (nombre, fecha_str), segs in total_por_usuario_fecha.items():
+            horas = round(segs / 3600, 2)
+            totales_diarios_list.append({
+                "nombre": nombre,
+                "fecha": fecha_str,
+                "horas_trabajadas": horas
+            })
+        df_totales_diarios = pd.DataFrame(totales_diarios_list)
+
+        # --- 6) Generar el Excel con cuatro hojas en memoria ---
         output = BytesIO()
         with pd.ExcelWriter(output, engine="openpyxl") as writer:
-            # Hoja “Registros”
+            # Hoja 1: “Registros”
             df_reg = df[["nombre", "accion", "fecha", "hora", "proyecto"]].copy()
             df_reg.to_excel(writer, sheet_name="Registros", index=False)
 
-            # Hoja “Totales Globales”
-            df_totales.to_excel(writer, sheet_name="Totales", index=False)
+            # Hoja 2: “Totales Globales”
+            df_totales.to_excel(writer, sheet_name="Totales Globales", index=False)
 
-            # Hoja “Totales Semanales”
+            # Hoja 3: “Totales Semanales”
             df_totales_semanal.to_excel(writer, sheet_name="Totales Semanales", index=False)
+
+            # Hoja 4: “Totales Diarios”
+            df_totales_diarios.to_excel(writer, sheet_name="Totales Diarios", index=False)
 
         output.seek(0)
 
-        # 6) Devolver como descarga un .xlsx
+        # Nombre de archivo con timestamp actual
         filename = f"registros_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"
         return send_file(
             output,
@@ -469,8 +543,6 @@ def exportar():
     except Exception as e:
         logging.error(f"Error exporting Excel: {e}", exc_info=True)
         return "Error al generar el archivo Excel.", 500
-
-
 
 # -- NUEVOS ENDPOINTS PARA HORAS TOTALES --
 
