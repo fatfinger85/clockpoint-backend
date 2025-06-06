@@ -682,6 +682,126 @@ def horas_totales_semanal():
         logging.error(f"Error en /horas-totales-semanal: {e}", exc_info=True)
         return jsonify({"status": "error", "message": "Error interno al calcular totales semanal"}), 500
 
+# -- NUEVOS ENDPOINTS PARA HORAS TOTALES DIARIAS --
+
+@app.route("/horas-totales-diarias", methods=["GET"])
+def horas_totales_diarias():
+    if not session.get("admin"):
+        return jsonify({"status": "error", "message": "No autorizado"}), 403
+    if not supabase:
+        return jsonify({"status": "error", "message": "DB no configurada"}), 500
+
+    try:
+        # 1) Traer todos los registros ordenados cronológicamente
+        registros = (
+            supabase.table("registros")
+            .select("nombre, accion, timestamp")
+            .order("timestamp", desc=False)
+            .execute()
+            .data
+        )
+        if not isinstance(registros, list):
+            logging.error(f"Respuesta inesperada de Supabase: {registros!r}")
+            return jsonify({"status": "error", "message": "Formato inesperado de datos"}), 500
+
+        # 2) Acumular segundos trabajados por (usuario, fecha)
+        total_por_usuario_fecha = defaultdict(float)
+        pendiente_entrada = {}  # { nombre_usuario: datetime de clock-in pendiente }
+
+        for idx, row in enumerate(registros):
+            nombre = row.get("nombre")
+            accion = (row.get("accion") or "").strip().lower()
+            ts = row.get("timestamp")
+
+            if not ts:
+                logging.warning(f"Registro #{idx} sin timestamp: {row!r}")
+                continue
+
+            # Parsear timestamp: "YYYY-MM-DD HH:MM:SS"
+            try:
+                dt = datetime.strptime(ts, "%Y-%m-%d %H:%M:%S")
+            except Exception as parse_err:
+                logging.warning(f"Registro #{idx} timestamp inválido '{ts}': {parse_err}")
+                continue
+
+            if accion == "clock in":
+                # Guardamos la entrada si no hay otra pendiente
+                if pendiente_entrada.get(nombre) is None:
+                    pendiente_entrada[nombre] = dt
+
+            elif accion == "clock out":
+                inicio = pendiente_entrada.get(nombre)
+                if inicio is not None:
+                    # Si el clock-out viene antes que el clock-in, descartamos por seguridad
+                    if dt <= inicio:
+                        logging.warning(f"Clock-out anterior al clock-in para {nombre}: {inicio} → {dt}")
+                        pendiente_entrada[nombre] = None
+                        continue
+
+                    # Si inicio y dt están en el mismo día, simple acumulado
+                    if inicio.date() == dt.date():
+                        segundos = (dt - inicio).total_seconds()
+                        fecha_str = inicio.strftime("%Y-%m-%d")
+                        key = (nombre, fecha_str)
+                        total_por_usuario_fecha[key] += segundos
+                    else:
+                        # Prorrateo: tenemos que dividir entre varios días
+                        temp_start = inicio
+                        temp_end = dt
+
+                        #  a) Primer trozo: desde 'inicio' hasta la medianoche de ese día
+                        #     (mediodía = primera fecha + 1 día a las 00:00:00)
+                        #     Ejemplo: inicio = 2025-06-02 17:30:00 → next_midnight = 2025-06-03 00:00:00
+                        next_midnight = datetime(
+                            temp_start.year, temp_start.month, temp_start.day
+                        ) + timedelta(days=1)
+                        segundos_primer_dia = (next_midnight - temp_start).total_seconds()
+                        fecha_inicio_str = temp_start.strftime("%Y-%m-%d")
+                        key_primero = (nombre, fecha_inicio_str)
+                        total_por_usuario_fecha[key_primero] += segundos_primer_dia
+
+                        #  b) Intermedios: si hubiera días completos entre next_midnight y fecha de salida
+                        temp_cursor = next_midnight
+                        while temp_cursor.date() < temp_end.date():
+                            # Día intermedio completo (00:00:00 a 24:00:00)
+                            fecha_intermedia_str = temp_cursor.strftime("%Y-%m-%d")
+                            segundos_dia_completo = 24 * 3600
+                            key_inter = (nombre, fecha_intermedia_str)
+                            total_por_usuario_fecha[key_inter] += segundos_dia_completo
+
+                            # Avanzamos un día
+                            temp_cursor = temp_cursor + timedelta(days=1)
+
+                        #  c) Último trozo: desde medianoche del día final hasta dt
+                        fecha_final_str = temp_end.strftime("%Y-%m-%d")
+                        # La medianoche de ese día es:
+                        midnight_final = datetime(temp_end.year, temp_end.month, temp_end.day)
+                        segundos_ultimo_dia = (temp_end - midnight_final).total_seconds()
+                        key_ultimo = (nombre, fecha_final_str)
+                        total_por_usuario_fecha[key_ultimo] += segundos_ultimo_dia
+
+                    # Liberamos la entrada pendiente
+                    pendiente_entrada[nombre] = None
+
+        # 3) Convertir segundos a horas y armar lista de resultados
+        resultados = []
+        for (nombre, fecha_str), segs in total_por_usuario_fecha.items():
+            horas = round(segs / 3600, 2)
+            resultados.append({
+                "nombre": nombre,
+                "fecha": fecha_str,
+                "horas_trabajadas": horas
+            })
+
+        # Ordenar por fecha ascendente y luego por nombre
+        resultados.sort(key=lambda x: (x["fecha"], x["nombre"]))
+
+        return jsonify({"status": "success", "totales_diarios": resultados})
+
+    except Exception as e:
+        logging.error(f"Error en /horas-totales-diarias: {e}", exc_info=True)
+        return jsonify({"status": "error", "message": "Error interno al calcular totales diarios"}), 500
+
 
 # Health check endpoint (optional but good practice)
 @app.route("/health")
